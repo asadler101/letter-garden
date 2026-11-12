@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f4e9">
   <title>Letter Garden • A little adventure from A to Z</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <header class="topbar">
     <button class="brand" id="home" aria-label="Letter Garden home"><span class="brand-icon">✿</span><span>letter garden<span class="brand-sub">LITTLE LETTERS. BIG DISCOVERIES.</span></span></button>
-    <div class="header-actions"><button class="icon-button" id="sound" aria-label="Turn sound off" title="Sound on">♫</button><button class="parent-button" id="grownups">Grown-ups <span>⚙</span></button></div>
+    <div class="header-actions"><button class="icon-button" id="sound" aria-label="Turn sound off" title="Sound on">♫</button><button class="parent-button" id="grownups" aria-label="Grown-up settings">Grown-ups <span>⚙</span></button></div>
   </header>
   <main id="app"></main>
   <footer><span class="footer-flower">✿</span> A little curiosity goes a long way. <span class="footer-dots">● ● ●</span></footer>
@@ -22,10 +22,10 @@
     <div id="custom-wrap" hidden><label for="custom-letters">Your letters</label><input id="custom-letters" maxlength="26" placeholder="For example: SAM" autocomplete="off"><p class="small">Use at least three different letters. Names are a lovely place to start.</p></div>
     <label for="case">Show letters as</label><select id="case"><option value="upper">Big letters · ABC</option><option value="lower">Little letters · abc</option></select>
     <button class="primary" id="save-settings">Ready to grow <span>→</span></button>
-    <p class="small">Speech uses your browser’s voices. If you don’t hear anything, check your laptop volume and try Edge or Chrome. Play at your child’s pace; a few happy minutes is plenty.</p>
+    <button class="audio-test" id="test-sound">♫ Test sound</button><p class="small" id="audio-status" role="status">Tap to hear a short greeting.</p><p class="small">On iPhone, turn up media volume and turn off Silent Mode if needed. Tap Test sound or Hear the letter to start playback. Voice recordings are included with the game; your browser’s speech voice is a backup.</p>
     <button class="text-button" id="reset">Start a fresh garden</button>
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>
