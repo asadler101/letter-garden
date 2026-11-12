@@ -45,3 +45,10 @@ test('all 132 bundled recordings are valid non-silent PCM WAVs',()=>{
   let peak=0;for(let i=at+8;i+1<data.length;i+=2)peak=Math.max(peak,Math.abs(data.readInt16LE(i)));assert.ok(peak>100,name);
  }
 });
+
+test('picnic narration names each letter once',()=>{
+ const env=setup();
+ const manifest=JSON.parse(fs.readFileSync(path.join(root,'audio/manifest.json'),'utf8'));
+ for(const [letter,word] of env.run('alphabet')) assert.equal(manifest['explore-'+letter],`${letter} is for ${word}.`);
+ assert.ok(source.includes('speak(`${item[0]} is for ${item[1]}.`,`explore-${item[0]}`)'));
+});
