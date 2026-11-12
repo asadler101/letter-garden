@@ -130,5 +130,6 @@
   "match-Z": "This is big Z. Can you find little Z?",
   "correct-Z": "You found Z! Z is for zebra. Your garden grew a flower!",
   "explore-Z": "Z is for zebra.",
-  "retry-Z": "That is Z. Try another letter."
+  "retry-Z": "That is Z. Try another letter.",
+  "garden-complete": "Hooray! Five flowers! You grew a beautiful garden. Well done, little gardener!"
 }

@@ -21,7 +21,7 @@ Grown-ups can choose the first five letters, the whole alphabet, or a custom gro
 
 Voice recordings are included and load one at a time as needed. Playback starts directly from a tap, including on iPhone. If a recording cannot load, browser speech synthesis is a backup. On iPhone, check media volume and Silent Mode; use **Grown-ups → Test sound** to check playback. Downloads require a connection when playing online. For offline play, keep the audio folder beside index.html. The optional Google Fonts fall back to system fonts. On older systems a few emoji may be unavailable.
 
-The garden shows five flower icons and keeps a total count as play continues. There are no competitive scores or automatic advancement: the child chooses when to try another letter. Alphabet picnic is free exploration and does not add flowers.
+Each correct answer grows one of five flowers. At five, a garden celebration appears with a spoken cheer and a choice to plant another garden or rest. Planting resets the five flower slots while keeping lifetime flowers; a completed garden stays available until the child chooses to plant again. Older saves carry their current progress forward from the total. There are no competitive scores or automatic advancement: the child chooses when to try another letter. Alphabet picnic is free exploration and does not add flowers.
 
 ## Development
 
@@ -34,6 +34,6 @@ GitHub Pages serves the root of the main branch. Push changes to main to update 
 
 ## Audio and compatibility checks
 
-Run `node --test tests/audio.test.js` for audio lifecycle and recording-integrity regressions. The 132 recordings are PCM WAV, 16 kHz mono, about 17 MB total, fetched on demand. To regenerate them silently using an installed Windows English voice, run `powershell.exe -NoProfile -File generate-audio.ps1`. This writes directly to files, without speaker playback.
+Run `node --test tests/audio.test.js` for audio lifecycle and recording-integrity regressions. The 133 recordings are PCM WAV, 16 kHz mono, about 17 MB total, fetched on demand. To regenerate them silently using an installed Windows English voice, run `powershell.exe -NoProfile -File generate-audio.ps1`. This writes directly to files, without speaker playback.
 
 Add `?silent=1` to the game URL for silent development and layout testing. This suppresses all audio without changing saved sound preferences. Layout checks covered widths from 280 to 1920 pixels, including phone landscape and a scrollable settings dialog. Actual iPhone hardware playback still needs device confirmation; desktop responsive testing is not an iOS audio test.

@@ -43,3 +43,18 @@ dialog{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:a
 }
 @media(max-width:359px){.sound-label{font-size:10px}#sound{padding:0 9px}.brand-sub{display:none}.brand{font-size:18px}.brand-icon{font-size:27px}.hero h1{font-size:37px}.explore-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.play-nav{gap:10px}.mode-tag{font-size:9px;letter-spacing:1px}.garden-blooms{gap:6px}.bloom{font-size:26px}}
 @media(max-height:500px) and (min-width:600px){.topbar{padding-top:12px;padding-bottom:10px}.play-nav{margin:0 0 8px}.play-area h1{font-size:28px;margin:8px 0}.play-sub{margin:6px 0}.listen-button{margin:8px auto 14px;min-height:48px;padding:8px 20px}.letter-choice{height:115px;font-size:80px}.choices{max-width:540px;margin-bottom:12px}.target-letter{width:75px;height:80px;font-size:62px;margin:10px auto}.feedback{min-height:32px;font-size:21px}.round-garden{margin-top:10px}.next-button{min-height:48px;padding:12px 24px}.play-area:has(.target-letter){position:relative;padding-left:110px}.play-area:has(.target-letter) .target-letter{position:absolute;left:0;top:85px}.play-area:has(.target-letter) .choices{gap:12px}}
+/* A completed garden is a stopping point, with an optional new patch. */
+.garden-reward-button{border:0;border-radius:24px;background:var(--green);color:white;padding:13px 18px;min-height:48px;font-weight:600;font-size:12px;white-space:nowrap}
+.celebration{padding-bottom:20px}.celebration h1{color:var(--green)}
+.flower-patch{height:245px;max-width:540px;margin:30px auto 10px;position:relative;display:flex;align-items:flex-end;justify-content:center;gap:clamp(4px,2vw,18px);padding:0 12px 20px;isolation:isolate}
+.patch-ground{position:absolute;bottom:0;left:0;right:0;height:52px;background:#dce9b8;border-radius:50%;z-index:-1}
+.garden-flower{position:relative;width:18%;max-width:82px;display:flex;align-items:center;flex-direction:column;transform-origin:bottom;animation:bloom-in .65s both;animation-delay:calc(var(--i)*.12s)}
+.flower-head{font:normal clamp(52px,13vw,95px) var(--round);line-height:1;color:#e6b45c;z-index:1;text-shadow:0 3px 0 #0000000b}
+.garden-flower:nth-child(2) .flower-head{color:#df9b76}.garden-flower:nth-child(3) .flower-head{color:#b39cbc}.garden-flower:nth-child(4) .flower-head{color:#e4ab60}.garden-flower:nth-child(5) .flower-head{color:#c18da5}
+.flower-stem{display:block;width:7px;height:calc(58px + var(--i)*8px);background:#7f9d62;border-radius:8px;margin-top:-6px;position:relative}
+.flower-stem:before,.flower-stem:after{content:'';position:absolute;top:24px;width:25px;height:13px;background:#9db77a;border-radius:100% 0;right:3px;transform:rotate(22deg)}
+.flower-stem:after{right:auto;left:4px;top:39px;transform:rotate(-25deg);border-radius:0 100%}
+.reward-message{font:500 clamp(23px,4vw,30px) var(--round);margin:24px 0 10px}.reward-total{font-size:13px;color:var(--muted);margin:0 0 24px}.reward-actions{display:flex;flex-direction:column;align-items:center;gap:12px}.rest-button{background:transparent;border:1px solid var(--line);border-radius:28px;min-height:48px;padding:12px 25px;font-weight:600;font-size:13px}
+@keyframes bloom-in{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@media(max-width:600px){.flower-patch{height:205px;margin-top:20px}.reward-actions .next-button{width:100%;max-width:320px}.garden-reward-button{margin:auto}.flower-stem:before,.flower-stem:after{width:19px}}
+@media(max-height:500px) and (min-width:600px){.flower-patch{height:150px;margin:12px auto}.flower-head{font-size:60px}.flower-stem{height:calc(35px + var(--i)*5px)}.reward-message{margin-top:12px}.reward-actions{flex-direction:row;justify-content:center}.reward-total{margin-bottom:12px}}
