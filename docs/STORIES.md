@@ -1,6 +1,6 @@
 # Learning Garden — roadmap and story cards
 
-Updated: November 12, 2026
+Updated: November 13, 2026
 
 ## How to use this backlog
 
@@ -13,7 +13,7 @@ This is the source of truth for planned work. Keep Markdown only for now; do not
 
 Move one card to In progress, build its smallest complete experience, verify the criteria, then mark it Done and link its commit or pull request. Checkboxes below are acceptance checks, not a claim that work is complete. Dependencies specify what must be ready first; independent cards can be reordered.
 
-The current live product and repository are still named **Letter Garden**. **Learning Garden** is the proposed umbrella name. Implementing LG-01 changes the product branding; repository and URL renaming are outside that card.
+The repository and public URL retain **Letter Garden**. LG-01 introduces **Learning Garden** product branding. Repository and URL renaming are outside that card.
 
 ## Product direction
 
@@ -56,17 +56,19 @@ The cards below add to these capabilities rather than rebuilding them.
 
 ### LG-01 — Introduce Learning Garden
 
-**Status:** Backlog · **Dependencies:** None
+**Status:** Done · **Dependencies:** None
 
 **Story:** As a parent and child, we want a clear home for different learning activities so the game can grow beyond letters.
 
 **Experience:** The home screen welcomes the child to Learning Garden and offers two large illustrated destinations: Letter Garden and Number Garden. Until numbers are ready, the unfinished destination is not presented as playable.
 
 **Acceptance criteria:**
-- [ ] Visible branding and document title use Learning Garden; existing letter activities remain recognizable.
-- [ ] A child can reach either available subject through large picture buttons and return home easily.
-- [ ] Existing flowers, settings, and completed gardens survive the update.
-- [ ] Existing links continue to work; the repository and public URL are not renamed as part of this card.
+- [x] Visible branding and document title use Learning Garden; existing letter activities remain recognizable.
+- [x] A child can reach either available subject through large picture buttons and return home easily.
+- [x] Existing flowers, settings, and completed gardens survive the update.
+- [x] Existing links continue to work; the repository and public URL are not renamed as part of this card.
+
+**Implementation notes (November 13, 2026):** [Implementation commit](https://github.com/asadler101/letter-garden/commit/bc872491ae7f950c43483e1b1e1c483718c4f168). Learning Garden home and branding are implemented. Letter Garden opens the existing three activities; Number Garden is a non-interactive Coming soon destination. All 13 regressions and JavaScript syntax checks pass, including navigation and save preservation. The existing storage key and public URL are unchanged. The user tested the local browser preview and approved shipping. Separate phone/tablet, keyboard, and actual-device checks were not repeated for this release; that remains a verification limitation.
 
 **Out of scope:** New activities, a logo commission, store branding, and monetization.
 
