@@ -74,16 +74,18 @@ The cards below add to these capabilities rather than rebuilding them.
 
 ### LG-02 — Make progress ready for more subjects
 
-**Status:** Backlog · **Dependencies:** None; required before new progress-producing features ship
+**Status:** In progress · **Dependencies:** None; required before new progress-producing features ship
 
 **Story:** As a family, we want updates and new activities to preserve the garden we already grew.
 
 **Acceptance criteria:**
-- [ ] A versioned browser save holds shared garden progress plus separate letter and number preferences.
-- [ ] Existing saves migrate without losing flowers, sound preferences, custom letters, or a completed patch.
-- [ ] Future visitor, decoration, mission, and name fields can be added without resetting unrelated data.
-- [ ] Missing, invalid, or unavailable storage does not prevent play; show parents when progress cannot be saved.
-- [ ] Save migration and completed-garden behavior have regression coverage.
+- [x] A versioned browser save holds shared garden progress plus separate letter and number preferences.
+- [x] Existing saves migrate without losing flowers, sound preferences, custom letters, or a completed patch.
+- [x] Future visitor, decoration, mission, and name fields can be added without resetting unrelated data.
+- [x] Missing, invalid, or unavailable storage does not prevent play; show parents when progress cannot be saved.
+- [x] Save migration and completed-garden behavior have regression coverage.
+
+**Implementation notes (November 13, 2026):** Version 1 saves retain the `letter-garden` key and separate `garden`, shared `preferences.sound`, `preferences.letters`, and `preferences.numbers`. Legacy saves migrate on load; unknown fields are preserved for future additions. Unsupported versions are not overwritten. Grown-up settings show storage failures while in-memory play continues. Regression coverage includes legacy and versioned reloads, completed patches, invalid/missing storage, read/write failures, and future-field preservation. All 18 regressions and JavaScript syntax checks pass. The user reviewed the local preview and approved shipping. Separate phone/tablet, keyboard, and actual-device checks were not repeated; that remains a verification limitation. [Implementation commit](https://github.com/asadler101/letter-garden/commit/ed8d9b6). Publication is pending approval of the specific GitHub destination.
 
 **Out of scope:** Cloud sync and user accounts.
 
