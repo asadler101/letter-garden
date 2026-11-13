@@ -37,3 +37,7 @@ GitHub Pages serves the root of the main branch. Push changes to main to update 
 Run `node --test tests/audio.test.js` for audio lifecycle and recording-integrity regressions. The 133 recordings are PCM WAV, 16 kHz mono, about 17 MB total, fetched on demand. To regenerate them silently using an installed Windows English voice, run `powershell.exe -NoProfile -File generate-audio.ps1`. This writes directly to files, without speaker playback.
 
 Add `?silent=1` to the game URL for silent development and layout testing. This suppresses all audio without changing saved sound preferences. Layout checks covered widths from 280 to 1920 pixels, including phone landscape and a scrollable settings dialog. Actual iPhone hardware playback still needs device confirmation; desktop responsive testing is not an iOS audio test.
+
+## Product roadmap
+
+The proposed Learning Garden expansion, release order, and detailed acceptance criteria are tracked in [the story backlog](docs/STORIES.md). Planned cards are separate from delivered features. GitHub Issues are not being created at this stage.
