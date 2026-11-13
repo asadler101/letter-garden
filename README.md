@@ -1,13 +1,13 @@
-# Letter Garden
+# Learning Garden
 
-A calm, touch-friendly alphabet game for a little learner. No account, installation, ads, timers, or scores required.
+A calm, touch-friendly learning game for a little learner. No account, installation, ads, timers, or scores required.
 
 ## Play
 
-[Play Letter Garden online](https://asadler101.github.io/letter-garden/).
+[Play Learning Garden online](https://asadler101.github.io/letter-garden/).
 
 
-Open **index.html** in Edge or Chrome and tap a game. Turn up your laptop volume to hear the letters. Use the browser's full-screen mode (F11) for more room.
+Open **index.html** in Edge or Chrome and choose **Letter Garden**, then tap a game. Number Garden is marked Coming soon until its activities are ready. Turn up your laptop volume to hear the letters. Use the browser's full-screen mode (F11) for more room.
 
 For a local web preview, run `node server.js` and open http://localhost:4173. No packages need to be installed.
 
@@ -40,4 +40,4 @@ Add `?silent=1` to the game URL for silent development and layout testing. This 
 
 ## Product roadmap
 
-The proposed Learning Garden expansion, release order, and detailed acceptance criteria are tracked in [the story backlog](docs/STORIES.md). Planned cards are separate from delivered features. GitHub Issues are not being created at this stage.
+The Learning Garden expansion, release order, and detailed acceptance criteria are tracked in [the story backlog](docs/STORIES.md). Planned cards are separate from delivered features. GitHub Issues are not being created at this stage.

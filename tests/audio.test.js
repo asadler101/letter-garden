@@ -85,3 +85,32 @@ test('an older save with exactly five flowers can claim its completed garden',()
  const env=setup({silent:true,savedState:{flowers:5}});assert.equal(env.run('state.patchFlowers'),5);
  env.run("start('find')");assert.equal(env.run('mode'),'reward');assert.equal(env.run('state.flowers'),5);
 });
+
+
+test('subject navigation preserves saved preferences and a completed garden',()=>{
+ const env=setup({silent:true,savedState:{set:'custom',custom:'SAM',case:'lower',sound:false,flowers:15,patchFlowers:5}});
+ const before=env.run('JSON.stringify(state)');
+ assert.equal(env.run('mode'),'home');
+ assert.match(env.elements.get('app').innerHTML,/Welcome to Learning Garden/);
+ assert.match(env.elements.get('app').innerHTML,/Number Garden/);
+ assert.match(env.elements.get('app').innerHTML,/Coming soon/);
+ assert.doesNotMatch(env.elements.get('app').innerHTML,/<button[^>]*id="number-garden"/);
+ env.elements.get('letter-garden').onclick();assert.equal(env.run('mode'),'letters');
+ assert.match(env.elements.get('app').innerHTML,/Find a letter/);
+ env.run("start('match')");assert.equal(env.run('mode'),'reward');
+ env.elements.get('back').onclick();assert.equal(env.run('mode'),'letters');
+ env.elements.get('subject-home').onclick();assert.equal(env.run('mode'),'home');
+ env.elements.get('see-garden').onclick();assert.equal(env.run('mode'),'reward');
+ env.elements.get('rest').onclick();assert.equal(env.run('mode'),'home');
+ assert.equal(env.run('JSON.stringify(state)'),before);
+ assert.equal(plays(env).length,0);
+});
+
+test('all letter activities return to the letter menu and the brand returns home',()=>{
+ const env=setup({silent:true});
+ for(const activity of ['find','match','explore']){
+  env.run(`start('${activity}')`);
+  env.elements.get('back').onclick();assert.equal(env.run('mode'),'letters');
+  env.elements.get('home').onclick();assert.equal(env.run('mode'),'home');
+ }
+});
