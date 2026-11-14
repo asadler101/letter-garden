@@ -1155,7 +1155,7 @@ test('voice preview preserves saved preferences and a stuck recording still allo
 
 test('both voice test buttons preview the draft rather than the saved recording mode',()=>{
  const env=setup({muted:true});env.run("state.preferences.voiceMode='recordings';window.speechSynthesis.getVoices=()=>[{name:'Samantha',lang:'en-US',localService:true}];document.getElementById('voice-mode').value='device'");
- const before=env.run('JSON.stringify(state.preferences)');env.elements.get('test-sound').onclick();
+ const before=env.run('JSON.stringify({...state.preferences,sound:true})');env.elements.get('test-sound').onclick();
  assert.equal(plays(env).length,0);assert.equal(env.spoken.length,1);assert.match(env.elements.get('audio-status').textContent,/device voice: Samantha/);assert.equal(env.run('JSON.stringify(state.preferences)'),before);
  env.elements.get('preview-voice').onclick();assert.equal(env.spoken.length,2);assert.equal(env.spoken[0].text,env.spoken[1].text);
  env.run("document.getElementById('voice-mode').value='recordings'");env.elements.get('test-sound').onclick();assert.equal(plays(env).length,1);assert.match(env.elements.get('audio-status').textContent,/original Windows Zira/);
@@ -1189,4 +1189,12 @@ test('one stalled voice switches the session to recordings until an intentional 
  const env=setup();env.run("state.preferences.voiceMode='device';speak('one','count-number-1')");env.fireTimers(2500);
  env.run("speak('two','count-number-2')");assert.equal(env.spoken.length,1);assert.equal(plays(env).length,2);
  env.run("document.getElementById('voice-mode').value='device';previewVoice()");assert.equal(env.spoken.length,2);
+});
+
+test('Test sound enables and saves game audio so a muted preview is followed by spoken letter prompts',()=>{
+ const env=setup({muted:true});env.run("document.getElementById('voice-mode').value='recordings'");
+ env.elements.get('preview-voice').onclick();assert.equal(env.run('state.preferences.sound'),false);assert.match(env.elements.get('audio-status').textContent,/Game sound is off/);
+ env.elements.get('test-sound').onclick();assert.equal(env.run('state.preferences.sound'),true);assert.equal(JSON.parse(env.writes.at(-1).value).preferences.sound,true);assert.match(env.elements.get('sound').innerHTML,/Sound on/);
+ const count=plays(env).length;env.run("start('find')");assert.equal(plays(env).length,count+1);assert.match(plays(env).at(-1),/^audio\/find-[A-Z]\.wav$/);
+ const reload=setup({rawSave:env.writes.at(-1).value});reload.run("start('find')");assert.equal(plays(reload).length,1);
 });
