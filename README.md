@@ -91,3 +91,12 @@ History stores only version 1, up to eight known activities, 26 distinct letters
 LG-21 validation: all 110 silent Node regressions and app/server syntax/diff checks pass. New cases cover every activity, intentional participation versus visits, retries/help/picnic duplicate writes, name/mission participation, reloads, separate clear and save failure, old/invalid histories and bounded backup round-trips. Browser/device layout, keyboard/focus, reduced motion and actual audio remain unverified. Not committed or published.
 
 LG-22 family verification is In progress. The [family check record](docs/FAMILY-CHECKS.md) contains consent/minimal-data guidance, anonymous feedback rows, actual-device and offline-file checks, and reward/mission interruption checkpoints. All 110 silent Node regressions, including 203 WAV integrity checks, and app/server syntax/diff checks pass. Family sessions, actual iPhone/tablet/laptop observations, listening, offline-file behavior and full interruption results remain NOT RUN; automated checks do not close that gate. Corrected stale number-settings help to describe the three playable activities. Not committed or published.
+
+
+## Letter round improvements
+
+Correct Find a Letter and Big & Little answers automatically start the next letter after spoken feedback and a short pause (about 0.9 seconds when muted). The five-flower celebration still waits for the child. Leaving, opening settings, hiding the page, or replaying audio cancels the pending advance; Another letter remains available. Landscape tablet letter screens use compact spacing and put the matching target beside the speaker controls.
+
+Grown-ups can choose Automatic, Device voice, or Original recordings under Narration voice, and preview with Try this voice before saving. Automatic prefers a suitable local English voice when available. Device voice quality depends on installed voices; the original Windows Zira recordings remain available. Device speech uses a neutral pitch and a slightly slower natural rate. Preview never changes saved mute or voice preferences, and silent development previews remain silent. Entered names are never narrated.
+
+Verification: silent regressions, JavaScript syntax, and diff checks pass. Browser automation was unavailable for this follow-up; actual iPad landscape fit and voice quality still require device confirmation. These changes supersede the earlier manual-next-letter behavior for the two letter matching/finding activities.

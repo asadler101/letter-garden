@@ -116,3 +116,31 @@ dialog{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:a
 #name-preview{overflow-wrap:anywhere;white-space:pre-wrap}
 
 .name-positions{display:flex;flex-wrap:wrap;justify-content:center;gap:.35rem;margin:1.5rem 0;white-space:pre-wrap}.name-position{font-size:clamp(2rem,7vw,4rem);min-width:.8em;overflow-wrap:anywhere}
+
+/* Keep letter rounds in view on landscape tablets, including browser chrome. */
+@media (min-width:700px) and (max-height:850px) and (orientation:landscape){
+ body:has(.letter-play) .topbar{padding-top:10px;padding-bottom:10px}
+ body:has(.letter-play) main{padding-top:0;padding-bottom:6px}
+ body:has(.letter-play) footer{display:none}
+ body:has(.letter-play) .play-nav{margin:0 0 4px}
+ .letter-play h1{font-size:28px;margin:4px 0}
+ .letter-play>.eyebrow,.letter-play>.play-sub{display:none}
+ .letter-play .target-letter{width:92px;height:94px;font-size:76px;margin:8px auto}
+ .letter-play .listen-button{min-height:44px;margin:6px auto 12px;padding:8px 20px}
+ .letter-play .choices{margin-bottom:8px;gap:16px}
+ .letter-play .letter-choice{height:clamp(100px,19dvh,150px);font-size:clamp(70px,14dvh,105px)}
+ .letter-play .feedback{font-size:20px;min-height:30px;margin:4px 0}
+ .letter-play .round-garden{margin:6px auto 0;min-height:32px;gap:8px}
+ .letter-play .learning-buddy{margin:4px auto;padding:4px 10px}
+ .letter-play .next-button{min-height:44px;padding:10px 22px}
+}
+
+@media (min-width:700px) and (max-height:850px) and (orientation:landscape){
+ .matching-play{display:grid;grid-template-columns:110px minmax(0,1fr);column-gap:16px;align-items:center}
+ .matching-play>h1,.matching-play>.choices,.matching-play>.feedback,.matching-play>.next-button,.matching-play>.round-garden,.matching-play>.mission-progress{grid-column:1/-1}
+ .matching-play>.target-letter{grid-column:1;grid-row:2/4}
+ .matching-play>.learning-buddy{grid-column:2;grid-row:2;min-height:36px}
+ .matching-play>.learning-buddy .learning-buddy-picture{font-size:28px}
+ .matching-play>.listen-button{grid-column:2;grid-row:3;justify-self:center}
+ .matching-play>.next-button{justify-self:center}
+}

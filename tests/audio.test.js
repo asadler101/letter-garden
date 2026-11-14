@@ -6,14 +6,14 @@ const path=require('node:path');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'app.js'),'utf8');
 function setup({silent=false, muted=false, playError=null, savedState={}, rawSave, readError=false, writeError=false, browser={}}={}){
-  const elements=new Map(), calls=[], spoken=[], writes=[], scrolls=[];
+  const elements=new Map(), calls=[], spoken=[], writes=[], scrolls=[], timers=new Map();let timerId=0;
   const element=()=>({append(){},innerHTML:'',textContent:'',classList:{add(){},remove(){}},setAttribute(){},querySelectorAll(){return []},querySelector(){return null},focus(){},remove(){}});
   const document={getElementById(id){if(!elements.has(id)) elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},createElement:element,body:{append(){}},addEventListener(){}};
   class Audio {pause(){calls.push('pause')} play(){calls.push(this.src);return playError?Promise.reject(playError):Promise.resolve()}}
-  const context=vm.createContext({document,Audio,URLSearchParams,File:require('node:buffer').File,URL:{createObjectURL(){return 'blob:backup'},revokeObjectURL(){}},navigator:{},...browser,location:{search:silent?'?silent=1':''},localStorage:{getItem(){if(readError)throw new Error('blocked');return rawSave !== undefined ? rawSave : JSON.stringify({sound:!muted,...savedState})},setItem(key,value){if(writeError)throw new Error('quota');writes.push({key,value})}},window:{scrollTo(...position){scrolls.push(position)},speechSynthesis:{cancel(){},resume(){},getVoices(){return []},speak(utterance){spoken.push(utterance)}}},SpeechSynthesisUtterance:class{constructor(text){this.text=text}},setTimeout(){},clearTimeout(){},console});
+  const context=vm.createContext({document,Audio,URLSearchParams,File:require('node:buffer').File,URL:{createObjectURL(){return 'blob:backup'},revokeObjectURL(){}},navigator:{},...browser,location:{search:silent?'?silent=1':''},localStorage:{getItem(){if(readError)throw new Error('blocked');return rawSave !== undefined ? rawSave : JSON.stringify({sound:!muted,...savedState})},setItem(key,value){if(writeError)throw new Error('quota');writes.push({key,value})}},window:{scrollTo(...position){scrolls.push(position)},speechSynthesis:{cancel(){},resume(){},getVoices(){return []},speak(utterance){spoken.push(utterance)}}},SpeechSynthesisUtterance:class{constructor(text){this.text=text}},setTimeout(fn,delay){const id=++timerId;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},console});
   context.window.SpeechSynthesisUtterance=context.SpeechSynthesisUtterance;
   vm.runInContext(source,context);
-  return {run:code=>vm.runInContext(code,context),calls,spoken,elements,writes,scrolls};
+  return {run:code=>vm.runInContext(code,context),calls,spoken,elements,writes,scrolls,timers,fireTimers:delay=>{for(const [id,timer] of [...timers])if(timer.delay===delay&&timers.delete(id))timer.fn();}};
 }
 const plays=env=>env.calls.filter(x=>x.startsWith('audio/'));
 test('another letter starts exactly one recording, synchronously from its handler',()=>{
@@ -1117,4 +1117,37 @@ test('history backups are bounded and strict; absent history starts empty withou
  env.run("state.practiceHistory={version:1,activities:Object.keys(practiceActivities),letters:alphabet.map(x=>x[0]),numbers:Array.from({length:10},(_,i)=>i+1),discoveries:999999};persist()");
  assert.equal(env.run('validPracticeHistory(validateBackup(JSON.stringify(state)).practiceHistory)'),true);
  assert.ok(env.run('JSON.stringify(state.practiceHistory).length')<500);
+});
+
+
+test('correct letters automatically advance after narration, but never skip the fifth-flower celebration',()=>{
+ const env=setup();env.run("start('match')");const id=env.run('letterRoundId');win(env);
+ assert.equal(env.run('letterRoundId'),id);env.run('player.onended()');env.fireTimers(900);
+ assert.equal(env.run('letterRoundId'),id+1);assert.equal(env.run('state.garden.flowers'),1);
+ const last=setup({savedState:{flowers:4}});last.run("start('match')");win(last);last.run('player.onended()');last.fireTimers(900);last.fireTimers(15000);
+ assert.equal(last.run('mode'),'reward');assert.equal(last.run('state.garden.flowers'),5);
+});
+test('muted auto advance cancels on navigation, settings, and manual next, with no duplicate rewards',()=>{
+ const env=setup({muted:true});env.run("start('find')");win(env);const id=env.run('letterRoundId');env.fireTimers(900);assert.equal(env.run('letterRoundId'),id+1);
+ win(env);env.run('home()');env.fireTimers(900);assert.equal(env.run('mode'),'home');assert.equal(env.run('state.garden.flowers'),2);
+ env.run("start('match')");win(env);const current=env.run('letterRoundId');env.run('stopAudio()');env.fireTimers(900);assert.equal(env.run('letterRoundId'),current);
+ env.elements.get('next').onclick();env.fireTimers(900);assert.equal(env.run('letterRoundId'),current+1);
+});
+test('device voice preference uses local speech at natural pitch and preserves completion callbacks',()=>{
+ const env=setup();env.run("window.speechSynthesis.getVoices=()=>[{name:'Samantha',lang:'en-US',localService:true}];state.preferences.voiceMode='device';speak('Hello','sound-on',()=>{window.completed=true})");
+ assert.equal(plays(env).length,0);assert.equal(env.spoken.length,1);assert.equal(env.spoken[0].voice.name,'Samantha');assert.equal(env.spoken[0].pitch,1);assert.equal(env.spoken[0].rate,.9);
+ env.spoken[0].onend();assert.equal(env.run('window.completed'),true);
+ const saved=JSON.parse(env.run('JSON.stringify(state)'));assert.equal(setup({rawSave:JSON.stringify(saved)}).run('state.preferences.voiceMode'),'device');
+ assert.throws(()=>env.run("validateBackup(JSON.stringify({...state,preferences:{...state.preferences,voiceMode:'bad'}}))"),/voice setting/);
+});
+test('automatic voice prefers suitable local voices while recordings and silent previews remain reliable',()=>{
+ const env=setup();env.run("window.speechSynthesis.getVoices=()=>[{name:'Samantha',lang:'en-US',localService:true}];speak('Hello','sound-on')");assert.equal(env.spoken.length,1);
+ env.run("state.preferences.voiceMode='recordings';speak('Hello','sound-on')");assert.equal(plays(env).length,1);
+ const silent=setup({silent:true});silent.run("state.preferences.voiceMode='device';speak('Hello','sound-on')");assert.equal(silent.spoken.length,0);assert.equal(plays(silent).length,0);
+});
+
+test('voice preview preserves saved preferences and a stuck recording still allows safe advancement',()=>{
+ const env=setup({muted:true});env.run("document.getElementById('voice-mode').value='device'");const before=env.run('JSON.stringify(state.preferences)');
+ env.elements.get('preview-voice').onclick();assert.equal(env.run('JSON.stringify(state.preferences)'),before);assert.equal(env.spoken.length,1);
+ const stuck=setup();stuck.run("start('match')");win(stuck);const id=stuck.run('letterRoundId');stuck.fireTimers(15000);stuck.fireTimers(900);assert.equal(stuck.run('letterRoundId'),id+1);assert.equal(stuck.run('state.garden.flowers'),1);
 });
