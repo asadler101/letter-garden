@@ -415,7 +415,7 @@ function previewVoice(){
   deviceVoiceUnavailable=false;
   const previous=state.preferences.voiceMode, sound=state.preferences.sound;
   state.preferences.voiceMode=document.getElementById('voice-mode').value;state.preferences.sound=true;
-  try{speak('Sound is on. Let’s play!','sound-on');}
+  try{speak('Sound is on. Let’s play!','sound-on');if(!sound&&!quietPreview)voiceStatus('Voice preview only. Game sound is off. Tap Test sound to turn game sound on, then Ready to grow to save this voice.');}
   finally{state.preferences.sound=sound;if(previous===undefined)delete state.preferences.voiceMode;else state.preferences.voiceMode=previous;}
 }
 function advanceAfterLetter(id){
@@ -907,9 +907,9 @@ document.getElementById('save-settings').onclick=()=>{if(!updateNamePreview()){d
 document.getElementById('abandon-mission').onclick=()=>{const previous=state.mission;delete state.mission;if(!persist()){if(previous!==undefined)state.mission=previous;return;}missionRunning=false;settings.close();home();toast('Mission put away. Your flowers are still here.');};
 document.getElementById('reset').onclick=()=>{state.garden.flowers=0;if(decorationRewardsAvailable()&&state.decorationRewards)state.decorationRewards.patchEarned=false;if(rewardsAvailable()&&state.visitorRewards)state.visitorRewards.patchEarned=false;state.garden.patchFlowers=0;persist();settings.close();home();toast('A fresh garden, ready to grow.');};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAudio();});
-document.getElementById('test-sound').onclick=previewVoice;
+document.getElementById('test-sound').onclick=()=>{state.preferences.sound=true;persist();updateSound();previewVoice();};
 persist();updateSound();home();
 
-// Both preview buttons use the draft selection, without saving or changing mute.
+// Both buttons use the draft voice; Test sound also enables game sound.
 document.getElementById('preview-voice').onclick=previewVoice;
 document.getElementById('voice-mode').onchange=()=>{stopAudio();voiceStatus('Selection changed. Tap Try this voice or Test sound to preview; Ready to grow saves it.');};
