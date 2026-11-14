@@ -109,3 +109,6 @@ Device speech stall recovery: a voice that never reports starting within 2.5 sec
 
 
 Prompt sound correction: Test sound now enables and saves game sound, updates the Sound on header, and previews the selected voice. Try this voice remains an unsaved voice preview, explicitly warning when game sound is off. A regression covers muted preview, Test sound, starting Find a Letter, and reopening with sound still enabled. All 123 tests pass; actual iPad playback remains to be confirmed.
+
+
+iPhone/iPad reliability correction: activity playback uses bundled recordings even if Automatic or Device voice was previously saved. Device voices remain available as explicit settings previews; the settings explain this distinction. This restores the original tap-triggered audio path on iOS/iPadOS, including desktop-mode iPad identification. On the fifth correct letter, the letter/picture-word recording now finishes before the garden cheer; muted play still opens the completed garden immediately. Prior device-voice activity behavior is superseded on these devices. Automated tests simulate platform identification and sequential completion; actual iPhone/iPad listening is still to be confirmed.

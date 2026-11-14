@@ -78,7 +78,7 @@ test('older saved totals carry progress into the current patch',()=>{
 });
 test('milestone plays one celebration recording instead of overlapping cheers',()=>{
  const env=setup({savedState:{flowers:4}});env.run("mode='find';round()");win(env);
- assert.deepEqual(plays(env).slice(1),['audio/garden-complete.wav']);
+ assert.match(plays(env).at(-1),/^audio\/correct-[A-Z]\.wav$/);env.run('player.onended()');assert.equal(plays(env).at(-1),'audio/garden-complete.wav');
 });
 
 test('an older save with exactly five flowers can claim its completed garden',()=>{
@@ -566,6 +566,7 @@ test('picnic buddy reacts once per tap with no flowers and stale picnic or lette
 test('buddy celebrations stay saved, muted and single-voiced, with reduced-motion styling',()=>{
  for(const options of [{},{muted:true},{silent:true}]){
   const env=setup({...options,savedState:{flowers:4,buddy:'bunny'}});env.run("start('find')");win(env);
+  if(!options.muted&&!options.silent)env.run('player.onended()');
   assert.match(env.elements.get('app').innerHTML,/learning-buddy happy/);assert.equal(env.run('state.buddy'),'bunny');
   const expected=options.muted||options.silent?0:1;assert.equal(plays(env).filter(x=>x==='audio/garden-complete.wav').length,expected);
   const before=plays(env).length;env.elements.get('rest').onclick();env.run('gardenComplete(false)');assert.equal(plays(env).length,before);
@@ -1197,4 +1198,20 @@ test('Test sound enables and saves game audio so a muted preview is followed by 
  env.elements.get('test-sound').onclick();assert.equal(env.run('state.preferences.sound'),true);assert.equal(JSON.parse(env.writes.at(-1).value).preferences.sound,true);assert.match(env.elements.get('sound').innerHTML,/Sound on/);
  const count=plays(env).length;env.run("start('find')");assert.equal(plays(env).length,count+1);assert.match(plays(env).at(-1),/^audio\/find-[A-Z]\.wav$/);
  const reload=setup({rawSave:env.writes.at(-1).value});reload.run("start('find')");assert.equal(plays(reload).length,1);
+});
+
+test('iPhone and desktop-mode iPad activity prompts and correct feedback use recordings even with Device selected',()=>{
+ for(const navigator of [{userAgent:'Mozilla/5.0 (iPhone)',platform:'iPhone',maxTouchPoints:5},{userAgent:'Mozilla/5.0 (Macintosh)',platform:'MacIntel',maxTouchPoints:5}]){
+  const env=setup({browser:{navigator}});env.run("state.preferences.voiceMode='device';window.speechSynthesis.getVoices=()=>[{name:'Samantha',lang:'en-US',localService:true}];start('find')");
+  assert.match(plays(env).at(-1),/^audio\/find-[A-Z]\.wav$/);assert.equal(env.spoken.length,0);
+  const letter=env.run('target[0]');win(env);assert.equal(plays(env).at(-1),'audio/correct-'+letter+'.wav');
+  const id=env.run('letterRoundId');assert.equal(env.run('letterRoundId'),id);env.run('player.onended()');env.fireTimers(900);assert.equal(env.run('letterRoundId'),id+1);assert.match(plays(env).at(-1),/^audio\/find-[A-Z]\.wav$/);
+  env.run("document.getElementById('voice-mode').value='device';previewVoice()");assert.equal(env.spoken.length,1);
+ }
+});
+test('fifth correct letter says its picture word before the garden cheer and never rewards twice',()=>{
+ const env=setup({savedState:{flowers:4}});env.run("start('find')");const letter=env.run('target[0]');win(env);
+ assert.equal(env.run('mode'),'find');assert.equal(plays(env).at(-1),'audio/correct-'+letter+'.wav');assert.equal(env.run('state.garden.flowers'),5);
+ win(env);assert.equal(env.run('state.garden.flowers'),5);env.run('player.onended()');assert.equal(env.run('mode'),'reward');assert.equal(plays(env).at(-1),'audio/garden-complete.wav');
+ const left=setup({savedState:{flowers:4}});left.run("start('find')");win(left);const stale=left.run('player.onended');left.run('home()');stale();assert.equal(left.run('mode'),'home');assert.equal(left.run('state.garden.flowers'),5);
 });
