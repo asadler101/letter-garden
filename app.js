@@ -397,7 +397,7 @@ function shuffle(items){const result=[...items];for(let i=result.length-1;i>0;i-
 // Keep one player and utterance alive; iOS can discard unreferenced speech objects.
 const player = new Audio();
 player.preload = 'none';
-let speech = null, playbackId = 0, countAudioQueue = [], letterAdvanceTimer;
+let speech = null, playbackId = 0, countAudioQueue = [], letterAdvanceTimer, speechWatchdog, deviceVoiceUnavailable=false;
 function cancelLetterAdvance(){clearTimeout(letterAdvanceTimer);letterAdvanceTimer=null;}
 function localEnglishVoices(){return window.speechSynthesis?.getVoices().filter(voice=>/^en(?:-|_)/i.test(voice.lang)&&voice.localService!==false)||[];}
 function preferredDeviceVoice(){
@@ -405,10 +405,19 @@ function preferredDeviceVoice(){
   return voices.find(voice=>/premium|enhanced|natural/i.test(voice.name)) || voices.find(voice=>/samantha|ava|allison|susan|karen|daniel|moira|aria|jenny/i.test(voice.name)) || voices[0];
 }
 function useDeviceVoice(){
+  if(deviceVoiceUnavailable)return false;
   const mode=state.preferences.voiceMode||'auto', voice=preferredDeviceVoice();
   return mode==='device'||(mode==='auto'&&voice&&!/zira|david|mark/i.test(voice.name));
 }
-function prepareVoiceSettings(){document.getElementById('voice-mode').value=state.preferences.voiceMode||'auto';}
+function voiceStatus(message){document.getElementById('audio-status').textContent=message;}
+function prepareVoiceSettings(){document.getElementById('voice-mode').value=state.preferences.voiceMode||'auto';voiceStatus('Try this voice or Test sound previews the selection above. Ready to grow saves it for play.');}
+function previewVoice(){
+  deviceVoiceUnavailable=false;
+  const previous=state.preferences.voiceMode, sound=state.preferences.sound;
+  state.preferences.voiceMode=document.getElementById('voice-mode').value;state.preferences.sound=true;
+  try{speak('Sound is on. Let’s play!','sound-on');}
+  finally{state.preferences.sound=sound;if(previous===undefined)delete state.preferences.voiceMode;else state.preferences.voiceMode=previous;}
+}
 function advanceAfterLetter(id){
   cancelLetterAdvance();
   letterAdvanceTimer=setTimeout(()=>{letterAdvanceTimer=null;if(['find','match'].includes(mode)&&answered&&id===letterRoundId&&!document.hidden&&!settings.open)round();},900);
@@ -425,6 +434,7 @@ function playCountAudio(){
 }
 function stopAudio(clearQueue=true){
   cancelLetterAdvance();
+  clearTimeout(speechWatchdog);
   if(clearQueue)countAudioQueue=[];
   playbackId++;
   player.onended = null;
@@ -444,37 +454,55 @@ function speak(text, clip, onDone){
   stopAudio(!onDone);
   const id = playbackId;
   let finished=false;
-  const done=()=>{if(id===playbackId && !finished){finished=true;if(onDone)onDone();}};
+  const done=()=>{if(id===playbackId && !finished){finished=true;clearTimeout(speechWatchdog);if(onDone)onDone();}};
   player.onended=done;
   // Start play synchronously inside the tap, before any loading or promises.
   // Bundled recordings avoid dependence on iPhone speech voice availability.
-  let usedFallback = false;
+  let usedFallback = false, usedRecording = false;
+  function nativeFailed(){
+    if(id!==playbackId||finished)return;
+    deviceVoiceUnavailable=true;
+    clearTimeout(speechWatchdog);
+    if(speech){speech.onend=null;speech.onerror=null;}
+    if(window.speechSynthesis)window.speechSynthesis.cancel();
+    speech=null;
+    if(clip&&!usedRecording){voiceStatus('Device voice unavailable. Using the original Windows Zira recording instead.');recording(true);}
+    else{audioHelp();done();}
+  }
   function fallback(){
     if(id!==playbackId || usedFallback) return;
     usedFallback = true;
     player.onerror = null;
     player.pause();
-    if(!window.speechSynthesis || !window.SpeechSynthesisUtterance){audioHelp();done();return;}
+    if(!window.speechSynthesis || !window.SpeechSynthesisUtterance){nativeFailed();return;}
     try {
       speech = new SpeechSynthesisUtterance(text);
       speech.lang='en-US'; speech.rate=.9; speech.pitch=1;
       const voices = window.speechSynthesis.getVoices();
       const voice = preferredDeviceVoice() || voices.find(v=>v.lang==='en-US');
       if(voice) speech.voice=voice;
-      speech.onerror=event=>{if(id===playbackId && !['canceled','interrupted'].includes(event.error)){audioHelp();done();}};
+      voiceStatus(`Using device voice: ${voice?.name||'system default'}. Ready to grow saves your voice selection.`);
+      speech.onerror=()=>{if(id===playbackId)nativeFailed();};
+      speech.onstart=()=>{if(id===playbackId){clearTimeout(speechWatchdog);speechWatchdog=setTimeout(nativeFailed,Math.min(45000,Math.max(8000,text.split(/\s+/).length*650+6000)));}};
       speech.onend=()=>{if(id===playbackId){speech=null;done();}};
+      speechWatchdog=setTimeout(nativeFailed,2500);
       window.speechSynthesis.resume();
       window.speechSynthesis.speak(speech);
-    } catch { audioHelp();done(); }
+    } catch { nativeFailed(); }
   }
-  if(!clip||useDeviceVoice()){fallback();return;}
+  function recording(fromDevice=false){
+  if(id!==playbackId||usedRecording)return;usedRecording=true;
+  if(!fromDevice)voiceStatus('Using original Windows Zira recording. Ready to grow saves your voice selection.');
   player.src = `audio/${clip}.wav${clip.startsWith('explore-')?'?v=3':''}`;
-  player.onerror=fallback;
+  player.onerror=()=>{if(usedFallback){audioHelp();done();}else fallback();};
   const playing=player.play();
   if(playing) playing.catch(error=>{
     if(id!==playbackId || error.name==='AbortError') return;
-    if(error.name==='NotAllowedError'){audioHelp();done();} else fallback();
+    if(error.name==='NotAllowedError'||usedFallback){audioHelp();done();} else fallback();
   });
+  }
+  if(!clip||useDeviceVoice()){fallback();return;}
+  recording();
 }
 function speakPrompt(){if(target) {if(mode==='quantity'){speak('How many apples do you see? Tap a number, or count with me.','quantity-prompt');}else if(mode==='count'){if(countedObjects.size) {stopAudio();countAudio(countedObjects.size);}else speak('Tap each apple. Count with me!','count-prompt');}else if(mode==='number') speak(`Can you find ${numberWords[target]}?`,`number-find-${target}`);else speak(prompt(),`${mode}-${target[0]}`);}}
 function toast(text){const el=document.getElementById('toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3500);}
@@ -879,8 +907,9 @@ document.getElementById('save-settings').onclick=()=>{if(!updateNamePreview()){d
 document.getElementById('abandon-mission').onclick=()=>{const previous=state.mission;delete state.mission;if(!persist()){if(previous!==undefined)state.mission=previous;return;}missionRunning=false;settings.close();home();toast('Mission put away. Your flowers are still here.');};
 document.getElementById('reset').onclick=()=>{state.garden.flowers=0;if(decorationRewardsAvailable()&&state.decorationRewards)state.decorationRewards.patchEarned=false;if(rewardsAvailable()&&state.visitorRewards)state.visitorRewards.patchEarned=false;state.garden.patchFlowers=0;persist();settings.close();home();toast('A fresh garden, ready to grow.');};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAudio();});
-document.getElementById('test-sound').onclick=()=>{if(!state.preferences.sound){state.preferences.sound=true;persist();updateSound();}speak('Sound is on. Let’s play!','sound-on');};
+document.getElementById('test-sound').onclick=previewVoice;
 persist();updateSound();home();
 
-// Preview a voice without saving settings or changing mute preferences.
-document.getElementById('preview-voice').onclick=()=>{const previous=state.preferences.voiceMode;const sound=state.preferences.sound;state.preferences.voiceMode=document.getElementById('voice-mode').value;state.preferences.sound=true;try{speak('Hello, little gardener. Let’s find a letter together.','sound-on');}finally{state.preferences.sound=sound;if(previous===undefined)delete state.preferences.voiceMode;else state.preferences.voiceMode=previous;}};
+// Both preview buttons use the draft selection, without saving or changing mute.
+document.getElementById('preview-voice').onclick=previewVoice;
+document.getElementById('voice-mode').onchange=()=>{stopAudio();voiceStatus('Selection changed. Tap Try this voice or Test sound to preview; Ready to grow saves it.');};
