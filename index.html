@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f4e9">
   <title>Learning Garden • Little discoveries. Room to grow.</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
   <header class="topbar">
@@ -18,15 +18,51 @@
     <div class="dialog-head"><h2>A little room to grow</h2><button class="icon-button" id="close-settings" aria-label="Close settings">✕</button></div>
     <p>Start small, play together, and let curiosity lead.</p>
     <p class="small" id="storage-status" role="status" hidden></p>
+    <section aria-labelledby="name-heading">
+      <h3 id="name-heading">Letters from my name · optional</h3>
+      <label for="child-name">Name to display</label>
+      <input id="child-name" type="text" autocomplete="off" spellcheck="false" aria-describedby="name-help name-preview">
+      <p class="small" id="name-help">Use up to 40 characters. Keep the spelling you use, or leave empty to remove the name. Changes apply with Ready to grow. The name stays in this browser and is included in exported backups. Learning Garden does not upload names for narration or speak entered names.</p>
+      <p class="small" id="name-preview" role="status" aria-live="polite"></p>
+    </section>
     <label for="letter-set">Letters to practice</label>
     <select id="letter-set"><option value="starter">First five · A B C D E</option><option value="full">All 26 letters · A to Z</option><option value="custom">Choose your own letters</option></select>
     <div id="custom-wrap" hidden><label for="custom-letters">Your letters</label><input id="custom-letters" maxlength="26" placeholder="For example: SAM" autocomplete="off"><p class="small">Use at least three different letters. Names are a lovely place to start.</p></div>
     <label for="case">Show letters as</label><select id="case"><option value="upper">Big letters · ABC</option><option value="lower">Little letters · abc</option></select>
+    <label for="number-range">Numbers to practice</label>
+    <select id="number-range" aria-describedby="number-help"><option value="5">Start small · 1–5</option><option value="10">Explore more · 1–10</option></select>
+    <p class="small" id="number-help">Find a number, Count with me, and How many do you see are ready to play. Recognizing a numeral means finding a written number, such as 3. Counting a quantity means counting objects to find how many there are. This range applies to number practice, independently of your letter choices.</p>
     <button class="primary" id="save-settings">Ready to grow <span>→</span></button>
-    <button class="audio-test" id="test-sound">♫ Test sound</button><p class="small" id="audio-status" role="status">Tap to hear a short greeting.</p><p class="small">On iPhone, turn up media volume and turn off Silent Mode if needed. Tap Test sound or Hear the letter to start playback. Voice recordings are included with the game; your browser’s speech voice is a backup.</p>
+    <button class="audio-test" id="test-sound">♫ Test sound</button><p class="small" id="audio-status" role="status">Tap to hear a short greeting.</p><p class="small">On iPhone, turn up media volume and turn off Silent Mode if needed. Tap Test sound, Hear the letter, or Hear the number to start playback. Voice recordings are included with the game; your browser’s speech voice is a backup.</p>
+    <section aria-labelledby="practice-heading">
+      <h3 id="practice-heading">See what we have explored</h3>
+      <p class="small" id="practice-summary" role="status"></p>
+      <p class="small">This is participation on this browser/device, not mastery or a score for a named child. A valid answer attempt, counting tap/help, or picnic letter tap records the activity and its target once in the summary. Simply opening an activity does not. Repeated taps and retries do not add duplicate letters or numbers. Discoveries count successful flower-earning rounds, including retries and help; adult help is not detected. Shared devices combine everyone's play. Earlier saves have no history to reconstruct; tracking starts with this update or the last clear. No dates, names, individual attempts, or telemetry are added to history.</p>
+      <button class="text-button" id="clear-history">Clear practice history only</button>
+      <div id="confirm-clear-history" hidden><p class="small">Clear this device's practice summary? Flowers, collectibles, garden arrangement, mission, name and settings stay saved. Export a backup first if you want to restore this history later.</p><button class="audio-test" id="cancel-clear-history">Keep history</button><button class="audio-test" id="confirm-clear-history-button">Clear only practice history</button></div>
+    </section>
+    <section aria-labelledby="backup-heading">
+      <h3 id="backup-heading">Back up or move your garden</h3>
+      <p class="small">Backups include all saved progress and settings, and may contain a child's entered name. Creating or importing a backup stays on this device; Learning Garden does not upload it to a service. You choose where to save or share the file.</p>
+      <button class="audio-test" id="download-backup">Download backup</button>
+      <button class="audio-test" id="share-backup" hidden>Share backup file</button>
+      <p class="small">On iPhone, use Share backup file → Save to Files when available, or Download backup. To move gardens, open this game on the other device and choose the saved file below.</p>
+      <label for="import-backup">Import a garden backup</label>
+      <input type="file" id="import-backup" accept=".json,application/json">
+      <p class="small" id="backup-status" role="status" aria-live="polite"></p>
+      <div id="backup-review" hidden>
+        <h3>Review before replacing</h3>
+        <p class="small" id="backup-summary"></p>
+        <p class="small">Save a backup of your current garden first if you want to keep it.</p>
+        <button class="audio-test" id="cancel-import">Cancel import</button>
+        <button class="primary" id="confirm-import">Replace my garden with this backup</button>
+      </div>
+    </section>
+    <p class="small">Put away the little mission without losing earned flowers.</p>
+    <button class="text-button" id="abandon-mission">Abandon little mission</button>
     <button class="text-button" id="reset">Start a fresh garden</button>
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
