@@ -32,3 +32,8 @@ Run on the actual iPhone, then repeat applicable steps on tablet and touchscreen
 7. **Rejected backup on both devices:** import malformed JSON, unsupported version (e.g. `{"version":99}`), and an invalid garden/range. Confirm a useful error, no replacement summary/confirmation of invalid content, and unchanged flowers/settings after reopening. Cancel the file picker once and confirm play remains usable.
 
 For every failure record reproduction steps, expected/actual behavior, severity and device/build. Fix blockers and rerun affected cases. LG-09 passes only with recorded actual-device evidence for every acceptance criterion and no unresolved blocking issue.
+
+
+## Follow-up: narration and letter flow
+
+NOT RUN on actual iPad: compare Automatic / Device voice / Original recordings using Try this voice; confirm intelligibility, first-tap playback, repeat audio, mute, and rapid counting with each mode. Check Big & Little with and without a buddy in iPad landscape with Safari browser bars visible: answers, feedback, and flower strip should stay visible without scrolling. Correct letter answers should advance after narration; muted answers after a short pause. Verify leaving/settings/backgrounding/replay cancels automatic advancement, no duplicate flower is awarded, and flower five stops at the garden celebration. Browser controls were unavailable during implementation; layout has not been visually confirmed for this follow-up.
