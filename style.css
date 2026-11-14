@@ -62,3 +62,57 @@ dialog{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:a
 /* Subject destinations share the familiar activity-card styling. */
 .subject-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.subject-card{min-width:0;min-height:210px}.coming-soon{cursor:default}.coming-soon:hover{transform:none;box-shadow:none}.hero .play-nav{margin:0}.subject-card .card-art{font-size:clamp(28px,4vw,44px)}
 @media(max-width:600px){.subject-grid{grid-template-columns:1fr;gap:12px}.subject-card{min-height:160px;padding:20px 22px}.subject-card .card-top{position:static;margin-bottom:16px}.subject-card p{padding-right:16px}}
+
+#share-backup[hidden]{display:none}#backup-summary{overflow-wrap:anywhere}input[type="file"]{min-width:0;max-width:100%}input[type="file"]::file-selector-button{max-width:100%;min-height:44px;white-space:normal}
+
+/* Separated quantity objects retain their tap-order numeral without relying on color. */
+.count-objects{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;max-width:650px;margin:0 auto 24px}.count-object{position:relative;min-width:0;min-height:100px;padding:12px 8px 25px;border:3px solid #dce2cc;border-radius:22px;background:#fffdf6;font-size:48px}.count-object.counted{border-color:#426b43;background:#dceab8}.count-badge{position:absolute;right:5px;bottom:3px;font:500 24px var(--round);color:var(--green)}
+@media(max-width:600px){.count-objects{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.count-object{min-height:95px;font-size:42px}}
+
+.quantity-area .choices{margin-top:20px}.quantity-area .letter-choice{height:130px;font-size:90px}
+@media(max-width:600px){.quantity-area .letter-choice{height:110px;font-size:70px}}
+/* A quiet, optional friend; choosing never changes the shared flower patch. */
+.buddy-home{display:flex;align-items:center;gap:20px;padding:20px 24px;margin:8px 0 28px;background:#eef0df;border:1px solid var(--line);border-radius:24px}.buddy-avatar{font-size:56px;line-height:1.2}.buddy-home div{flex:1;min-width:0}.buddy-home h2{font-size:23px;margin:0 0 5px}.buddy-home p{font-size:13px;line-height:1.6;margin:0;color:var(--muted)}.buddy-home button{flex-shrink:0;background:#fffdf6}
+.buddy-intro h1{font-size:clamp(30px,5vw,48px)}.buddy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;max-width:850px;margin:20px auto}.buddy-card{min-width:0;min-height:230px;padding:25px 12px 20px;border:3px solid #dce2cc;border-radius:28px;background:#f3eedc;display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--ink)}.buddy-card:nth-child(2){background:#e8eedc}.buddy-card:nth-child(3){background:#eee7f2}.buddy-card[aria-pressed="true"]{border-color:var(--green);box-shadow:0 0 0 3px #fffdf6 inset}.buddy-picture{font-size:90px;line-height:1.3}.buddy-name{font:600 26px var(--round)}.buddy-check{font-size:13px;font-weight:600;color:var(--green)}.buddy-confirm{max-width:620px;margin:24px auto;text-align:center}.buddy-confirm>p:first-child{font-size:18px;line-height:1.6;min-height:58px}.buddy-confirm .primary{margin:12px auto;max-width:380px}.buddy-confirm .rest-button{display:block;margin:12px auto}.buddy-confirm .primary:disabled{opacity:.6;cursor:default}.buddy-card:focus-visible,.buddy-home button:focus-visible,.buddy-confirm button:focus-visible{outline:3px solid #765487;outline-offset:5px}
+@media(max-width:600px){.buddy-home{flex-wrap:wrap;gap:12px;padding:18px}.buddy-home h2{font-size:20px}.buddy-avatar{font-size:44px}.buddy-home button{width:100%}.buddy-grid{gap:10px}.buddy-card{min-height:170px;border-radius:20px;padding:16px 4px;gap:10px}.buddy-picture{font-size:clamp(43px,12vw,68px)}.buddy-name{font-size:clamp(15px,4vw,22px)}.buddy-check{font-size:11px}.buddy-confirm .primary{width:100%}}
+@media(max-width:340px){.buddy-grid{grid-template-columns:1fr}.buddy-card{min-height:115px;flex-direction:row;justify-content:space-around;padding:12px}.buddy-picture{font-size:55px}.buddy-name{font-size:21px}.buddy-check{font-size:12px}}
+
+/* A quiet companion stays in the layout and never covers learning controls. */
+.learning-buddy{display:flex;align-items:center;justify-content:center;gap:9px;min-height:52px;margin:12px auto;color:var(--green);font-size:12px;max-width:100%}
+.learning-buddy-picture{font-size:38px;line-height:1.2}.learning-buddy-reaction{font-size:22px}.learning-buddy.happy .learning-buddy-reaction{animation:buddy-glow .5s ease-out}
+@keyframes buddy-glow{from{transform:scale(.8)}to{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.learning-buddy *{animation:none!important;transition:none!important}}
+
+/* An earned visitor stays available until its saved receipt is opened. */
+.visitor-surprise { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(100%, 540px); margin: 24px auto; padding: 24px 18px; border: 2px solid #a5b974; border-radius: 28px; background: #eef1df; color: #3d5635; cursor: pointer; font: inherit; text-align: center; }
+.visitor-surprise strong { font-size: clamp(1.2rem, 4vw, 1.6rem); }
+.visitor-gift { font-size: clamp(2.6rem, 8vw, 4rem); }
+.visitor-picture { font-size: clamp(6rem, 30vw, 11rem); line-height: 1.5; margin: 16px auto; }
+.visitor-surprise:hover { background: #e3eacb; }
+.visitor-surprise:focus-visible { outline: 4px solid #736488; outline-offset: 4px; }
+
+/* Friendly undiscovered shapes have no hidden visitor names. */
+.visitor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin:24px auto;max-width:950px}.visitor-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-width:0;min-height:220px;padding:18px 10px;border:2px solid #c4d0a9;border-radius:26px;background:#f2f3e5;color:var(--ink);font:inherit}.visitor-card strong{font:600 21px var(--round)}button.visitor-card{cursor:pointer}.collection-picture{font-size:76px;line-height:1.3}.visitor-silhouette{width:95px;height:95px;fill:#aebfa0}.visitor-silhouette circle{fill:#435d42}.visitor-silhouette .smile{fill:none;stroke:#435d42;stroke-width:3;stroke-linecap:round}.visitor-card.unknown{background:#edf0e7}.visitor-card.unknown strong{font-size:16px}.visitor-card:focus-visible{outline:4px solid #736488;outline-offset:4px}.visitor-wave .collection-picture{animation:visitor-wave .55s ease-out}@keyframes visitor-wave{25%{transform:rotate(-10deg) scale(1.08)}65%{transform:rotate(10deg) scale(1.08)}}@media(prefers-reduced-motion:reduce){.visitor-card *{animation:none!important;transition:none!important}}@media(max-width:360px){.visitor-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.visitor-card{min-height:185px}.collection-picture{font-size:60px}.visitor-card strong{font-size:18px}}
+
+.decoration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:720px;margin:28px auto}.decoration-grid .visitor-card{display:flex;flex-direction:column;gap:16px;padding:24px;min-width:0}.decoration-grid button{white-space:normal;min-height:52px}@media(max-width:520px){.decoration-grid{grid-template-columns:1fr;max-width:340px}}
+
+/* Tap placement: fixed spots stay generous without requiring dragging. */
+.garden-scene{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;background:#e6f1d9;border:3px solid #a6c48b;border-radius:28px;padding:20px;margin:20px 0}
+.garden-spot,.garden-item{min-width:0;min-height:100px;border:3px solid #a6c48b;border-radius:20px;background:#fffdf3;color:var(--ink);padding:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font:inherit;overflow-wrap:anywhere}
+.garden-spot span,.garden-item>span{font-size:44px;line-height:1.2}
+.garden-inventory{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.garden-scene.placing .garden-spot{border-color:#497d40;box-shadow:0 0 0 3px #b7dba5}
+.garden-item.selected,.garden-spot.selected{outline:4px solid #8a560a;outline-offset:2px;background:#fff0bc}
+.garden-spot:focus-visible,.garden-item:focus-visible{outline:4px solid #283f78;outline-offset:3px}
+#garden-return,#garden-cancel{min-height:48px;white-space:normal}
+.garden-spot:disabled,.garden-item:disabled,#garden-return:disabled,#garden-cancel:disabled{opacity:.55;cursor:default}
+@media(max-width:600px){.garden-scene{padding:12px;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}.garden-inventory{grid-template-columns:repeat(2,minmax(0,1fr))}.garden-item{padding:8px;font-size:15px}}
+
+/* My Garden gathers quiet collection play beside the saved arrangement. */
+.garden-hub{max-width:850px;margin:auto}.hub-blooms{justify-content:center;flex-wrap:wrap}.garden-preview .garden-spot{cursor:default}.hub-collections,.hub-subjects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0}.hub-collections button{display:flex;flex-direction:column;align-items:center;gap:10px;background:#f3eedc;border:2px solid #c4d0a9;border-radius:24px;white-space:normal}.hub-collections button>span:first-child{font-size:38px}.hub-collections strong{font:600 23px var(--round)}.hub-subjects button{white-space:normal;min-width:0}.hub-collections button:focus-visible,.hub-subjects button:focus-visible{outline:4px solid #736488;outline-offset:4px}@media(max-width:600px){.hub-collections,.hub-subjects{grid-template-columns:1fr;gap:12px}.hub-collections button{min-height:150px}}
+
+.mission-progress{margin:1rem auto;padding:1rem;border-radius:22px;background:#eef1df;text-align:center;max-width:36rem}.mission-markers{display:flex;justify-content:center;gap:1rem;font-size:2rem;margin:.5rem}.mission-progress p{margin:.4rem 0}.mission-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.7rem;margin:1rem}.mission-actions button{min-height:52px}
+
+#name-preview{overflow-wrap:anywhere;white-space:pre-wrap}
+
+.name-positions{display:flex;flex-wrap:wrap;justify-content:center;gap:.35rem;margin:1.5rem 0;white-space:pre-wrap}.name-position{font-size:clamp(2rem,7vw,4rem);min-width:.8em;overflow-wrap:anywhere}
