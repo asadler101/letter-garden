@@ -1151,3 +1151,42 @@ test('voice preview preserves saved preferences and a stuck recording still allo
  env.elements.get('preview-voice').onclick();assert.equal(env.run('JSON.stringify(state.preferences)'),before);assert.equal(env.spoken.length,1);
  const stuck=setup();stuck.run("start('match')");win(stuck);const id=stuck.run('letterRoundId');stuck.fireTimers(15000);stuck.fireTimers(900);assert.equal(stuck.run('letterRoundId'),id+1);assert.equal(stuck.run('state.garden.flowers'),1);
 });
+
+
+test('both voice test buttons preview the draft rather than the saved recording mode',()=>{
+ const env=setup({muted:true});env.run("state.preferences.voiceMode='recordings';window.speechSynthesis.getVoices=()=>[{name:'Samantha',lang:'en-US',localService:true}];document.getElementById('voice-mode').value='device'");
+ const before=env.run('JSON.stringify(state.preferences)');env.elements.get('test-sound').onclick();
+ assert.equal(plays(env).length,0);assert.equal(env.spoken.length,1);assert.match(env.elements.get('audio-status').textContent,/device voice: Samantha/);assert.equal(env.run('JSON.stringify(state.preferences)'),before);
+ env.elements.get('preview-voice').onclick();assert.equal(env.spoken.length,2);assert.equal(env.spoken[0].text,env.spoken[1].text);
+ env.run("document.getElementById('voice-mode').value='recordings'");env.elements.get('test-sound').onclick();assert.equal(plays(env).length,1);assert.match(env.elements.get('audio-status').textContent,/original Windows Zira/);
+});
+test('a failed device voice falls back to one recording without looping or duplicate completion',()=>{
+ const env=setup();env.run("state.preferences.voiceMode='device';speak('Hello','sound-on',()=>{window.finished=(window.finished||0)+1})");
+ env.spoken[0].onerror({error:'synthesis-failed'});assert.deepEqual(plays(env),['audio/sound-on.wav']);assert.match(env.elements.get('audio-status').textContent,/Device voice unavailable/);
+ env.run('player.onended()');assert.equal(env.run('window.finished'),1);env.run('player.onended()');assert.equal(env.run('window.finished'),1);
+ const unavailable=setup();unavailable.run("window.speechSynthesis=null;state.preferences.voiceMode='device';speak('Hello','sound-on')");assert.deepEqual(plays(unavailable),['audio/sound-on.wav']);
+});
+
+test('failed recording after failed device speech terminates without retrying either voice',async()=>{
+ const env=setup({playError:Object.assign(new Error('decode'),{name:'NotSupportedError'})});env.run("state.preferences.voiceMode='device';speak('Hello','sound-on',()=>{window.finished=(window.finished||0)+1})");env.spoken[0].onerror({error:'synthesis-failed'});await new Promise(setImmediate);
+ assert.equal(env.spoken.length,1);assert.equal(plays(env).length,1);assert.equal(env.run('window.finished'),1);
+});
+
+test('device speech that never starts falls back without losing completion callbacks',()=>{
+ const env=setup();env.run("state.preferences.voiceMode='device';speak('one','count-number-1',()=>{window.finished=(window.finished||0)+1})");env.fireTimers(2500);
+ assert.deepEqual(plays(env),['audio/count-number-1.wav']);env.run('player.onended()');assert.equal(env.run('window.finished'),1);
+});
+test('device speech that never ends recovers, and watchdogs cancel on leaving',()=>{
+ const env=setup();env.run("state.preferences.voiceMode='device';speak('one','count-number-1')");env.spoken[0].onstart();env.fireTimers(2500);assert.equal(plays(env).length,0);env.fireTimers(8000);assert.equal(plays(env).length,1);
+ const left=setup();left.run("state.preferences.voiceMode='device';speak('one','count-number-1');home()");left.fireTimers(2500);left.fireTimers(8000);assert.equal(plays(left).length,0);
+});
+test('unexpected speech interruption recovers without reviving stale playback',()=>{
+ const env=setup();env.run("state.preferences.voiceMode='device';speak('one','count-number-1')");env.spoken[0].onerror({error:'interrupted'});assert.equal(plays(env).length,1);
+ const newer=setup();newer.run("state.preferences.voiceMode='device';speak('one','count-number-1')");const stale=newer.spoken[0].onerror;newer.run("speak('two','count-number-2')");stale({error:'interrupted'});assert.equal(plays(newer).length,0);
+});
+
+test('one stalled voice switches the session to recordings until an intentional preview retries it',()=>{
+ const env=setup();env.run("state.preferences.voiceMode='device';speak('one','count-number-1')");env.fireTimers(2500);
+ env.run("speak('two','count-number-2')");assert.equal(env.spoken.length,1);assert.equal(plays(env).length,2);
+ env.run("document.getElementById('voice-mode').value='device';previewVoice()");assert.equal(env.spoken.length,2);
+});
