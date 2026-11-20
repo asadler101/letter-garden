@@ -20,7 +20,7 @@ The repository and public URL retain **Letter Garden**. LG-01 introduces **Learn
 - **Implemented and published:** LG-01–LG-08 and LG-10–LG-21. The expansion shipped in [PR #2](https://github.com/asadler101/letter-garden/pull/2); narration, landscape letter flow, and automatic letter progression were updated in [PR #3](https://github.com/asadler101/letter-garden/pull/3), [PR #4](https://github.com/asadler101/letter-garden/pull/4), [PR #5](https://github.com/asadler101/letter-garden/pull/5), and [PR #6](https://github.com/asadler101/letter-garden/pull/6). The dated “not committed/published” implementation notes below describe the earlier work session and are superseded by these releases.
 - **Still open before full sign-off:** LG-03 backup/share/import on actual devices; LG-09 numbers/device verification; LG-15 saved decoration layouts across phone/tablet/laptop; LG-22 family testing. Other implemented cards retain In progress until their shared device, layout, accessibility, and listening checks are recorded. See [device checks](DEVICE-CHECKS.md) and [family checks](FAMILY-CHECKS.md).
 - **Audio follow-up:** latest iPhone recording restoration and letter/picture-word feedback shipped in PR #6; successful actual-device confirmation is still needed. Replacing the original synthetic recordings with a more natural narrator has not been delivered.
-- **New, not implemented:** LG-31–LG-34, grown-up-configured break times.
+- **New, not implemented:** LG-31–LG-34, grown-up-configured break times; LG-35–LG-41, optional seasonal/holiday themes, themed collections, and little missions.
 - **Future proposals, not scheduled:** LG-23–LG-26 shapes, colors, patterns, and early letter sounds; LG-27–LG-30 paid-offering research, iOS preparation/unlock, and optional paid web/cross-device saves.
 
 A published feature is not automatically a passed device/family test. The open checkboxes below remain the acceptance record.
@@ -60,6 +60,7 @@ The cards below add to these capabilities rather than rebuilding them.
 | 3 — Make it mine | LG-14–LG-20 | Decorate a garden, take little missions, learn letters in a name |
 | 4 — Family readiness | LG-21–LG-22 | Simple parent progress view and a real-family quality pass |
 | 5 — Family break times | LG-31–LG-34 | Grown-ups schedule named picture-led breaks; play pauses throughout each break window |
+| 6 — Seasonal garden fun | LG-35–LG-41 | Optional seasons and holiday themes, themed collections and short missions, controlled by grown-ups |
 | Future learning proposals | LG-23–LG-26 | Shapes, colors, patterns, early sounds; refine before scheduling |
 | Future commercial proposals | LG-27–LG-30 | Validate pricing, prepare iOS, purchase restoration, optional paid web |
 
@@ -513,6 +514,124 @@ These cards add optional breaks configured by grown-ups, not timed learning chal
 - [ ] Observe whether a willing family understands the name/emoji alert and can take and finish a break without treating it as punishment; record blockers without unnecessary child information.
 
 **Release gate:** Break times are ready for family use when blocking issues are fixed and this card’s results are recorded.
+
+## Phase 6 — Seasonal garden fun
+
+These are optional cosmetic and story experiences, not new learning rules or a seasonal sales system. Everyday Garden stays available. Families choose which holidays, if any, appear; the app does not infer beliefs, location, or family traditions. Theme changes never reset learning progress, take away earned items, or create pressure to play by a deadline. Calendar automation is optional; every theme can be chosen manually.
+
+### LG-35 — Choose and control our garden theme
+
+**Status:** Backlog · **Dependencies:** LG-02, LG-16
+
+**Story:** As a grown-up, I want to choose our garden’s look and which seasonal or holiday themes appear so the experience fits our family.
+
+**Acceptance criteria:**
+- [ ] Grown-up Settings offers picture previews of Everyday Garden and available themes, with clear selection, confirmation, and an easy return to Everyday.
+- [ ] Default to Everyday Garden; seasonal changes and holiday content are opt-in. Show only the holiday themes the grown-up has enabled.
+- [ ] Offer a fixed manually chosen theme or optional automatic seasonal/holiday changes. A manual choice stays fixed until changed; automatic mode explains when and why the next change occurs.
+- [ ] In automatic mode, use explicit grown-up choices for seasonal calendar/hemisphere and eligible holidays rather than location tracking. Define overlapping holiday/season priority and show it in settings.
+- [ ] Automatic holiday windows use a documented, reviewed calendar for the supported year/region; do not assume every holiday has a fixed Gregorian date. If a date is unavailable, leave manual selection available instead of guessing.
+- [ ] Save theme preferences and enabled holidays in the browser and compatible backups. Older saves start with Everyday; invalid imported theme settings cannot replace the existing garden.
+- [ ] Choosing a theme preserves flowers, visitors, decorations/placements, buddy, mission/name progress, practice history, and break rules. A theme does not bypass an active break.
+- [ ] The theme is applied consistently to home, both subjects, learning screens, My Garden, celebrations, and the break screen without changing answers or navigation.
+
+**Out of scope:** Location permission, inferred religion/culture, paid theme packs, and changing device settings.
+
+### LG-36 — Enjoy four seasonal gardens
+
+**Status:** Backlog · **Dependencies:** LG-35
+
+**Story:** As a little learner, I want a garden that can look like spring, summer, autumn, or winter so familiar learning feels fresh and playful.
+
+**Acceptance criteria:**
+- [ ] Provide Spring Blossoms, Summer Sunshine, Autumn Leaves, and Winter Snow as distinct picture-led seasonal themes.
+- [ ] Use gentle garden art, backgrounds, and accents: blossoms/butterflies, sunshine/picnic details, leaves/acorns, and snowflakes/cozy details. Do not imply that every family’s local weather matches the theme.
+- [ ] Keep letters, numerals, countable groups, answer states, prompts, and touch targets clear; decorative objects cannot be mistaken for objects in a counting question.
+- [ ] Seasonal animations are subtle, do not cover controls, and stop under reduced motion; avoid flashing or automatically playing background music.
+- [ ] Season selection and automatic transitions work through LG-35 without restarting an activity, interrupting narration, or changing rewards.
+- [ ] All four seasons can be selected outside their calendar dates. No attendance, streak, countdown, or deadline is needed to enjoy them.
+
+### LG-37 — Visit optional holiday gardens
+
+**Status:** Backlog · **Dependencies:** LG-35
+
+**Story:** As a family, we want optional holiday looks that we can choose and revisit without being expected to celebrate every holiday.
+
+**Acceptance criteria:**
+- [ ] Include separate manually selectable Halloween, Thanksgiving, Christmas, Hanukkah, and Lunar New Year themes with a preview and grown-up enable/disable control for each.
+- [ ] Give each theme its own reviewed visual identity rather than treating different holidays as interchangeable. Begin with friendly pumpkins/costumes; a harvest/gratitude garden; festive trees/lights; a Hanukkah lights garden; and Lunar New Year lantern/garden details.
+- [ ] Review holiday names, symbols, written/spoken labels, and any year-specific imagery for accuracy and age suitability before release; explicitly define the supported tradition/region where it matters.
+- [ ] Keep Halloween gentle: no frightening surprises, jump scares, threatening characters, or flashing effects. Keep all holidays free from purchase prompts and pressure to participate.
+- [ ] No holiday is enabled automatically merely because a device date matches it. Automatic changes apply only to the grown-up’s enabled choices through LG-35.
+- [ ] Show holiday art as scenery; it cannot obscure learning content or add ambiguous objects to a counting group.
+- [ ] Themes remain available for manual revisits after their calendar window ends. Turning a holiday off immediately restores an allowed theme without affecting progress.
+
+**Out of scope:** Teaching religious practice, claiming every family celebrates the same way, and expanding the initial holiday set without a new content review.
+
+### LG-38 — Collect and keep themed garden surprises
+
+**Status:** Backlog · **Dependencies:** LG-12–LG-15, LG-36, LG-37
+
+**Story:** As a little learner, I want visitors and decorations that match my garden’s theme and remain mine when the season changes.
+
+**Acceptance criteria:**
+- [ ] Define a small reviewed catalog of cosmetic visitor/decoration variants for the initial themes, such as a butterfly with spring blossoms, autumn mushroom details, or a cozy winter birdhouse; show clear picture previews and spoken labels.
+- [ ] Start with variants of existing visitor/decoration types and stable identifiers. Distinguish the owned base item from its unlocked cosmetic looks; do not duplicate one unique decoration into multiple placement spots.
+- [ ] Use the normal completed-patch reward flow: one visitor reveal and one decoration choice per earned patch, with no extra flowers, currency, or duplicate reward grants caused by switching themes.
+- [ ] Save the exact earned/pending reward and variant options when the reward is granted. Changing the theme, reloading, or crossing a calendar boundary cannot reroll or replace an unopened reward.
+- [ ] Unlocked variants stay owned, visible in collections, and usable after switching back to Everyday or turning a holiday off. New holiday art respects the grown-up’s enabled content settings; a disabled holiday’s look can be hidden without deleting ownership.
+- [ ] Existing placements survive theme changes; moving/swapping a decorated item remains tap-based and preserves its selected look.
+- [ ] No “last chance” countdowns or expiring earned rewards. Themes and unclaimed rewards can be revisited without needing to play on a holiday.
+- [ ] Backup/import and old-save migration preserve inventory, pending rewards, ownership, and placements without duplicate claims.
+
+**Out of scope:** Rarity tiers, collectible trading, paid currency, and a new reward economy.
+
+### LG-39 — Play little seasonal and holiday missions
+
+**Status:** Backlog · **Dependencies:** LG-18, LG-36, LG-37
+
+**Story:** As a little learner, I want short themed adventures that give my familiar letter and number games a fun setting.
+
+**Acceptance criteria:**
+- [ ] Include one three-success mission for each season and each initial holiday. Define and review every mission’s title, picture steps, narration, and existing activity sequence before implementation.
+- [ ] Use gentle setups such as Help the Spring Garden Bloom, Pack a Summer Picnic, Gather Autumn Leaves, Help a Winter Bird, Find Friendly Pumpkins, Share a Harvest Picnic, Decorate a Festive Tree, Light Up a Hanukkah Garden, and Welcome the New Year with Lanterns.
+- [ ] Reuse existing learning activities and honor grown-up letter, number, sound, and theme/holiday settings; do not require reading or introduce unreviewed new learning rules.
+- [ ] Each successful learning round earns one normal flower and advances the mission once. Completing a themed story adds an ending, not duplicate flower credit or a new reward currency.
+- [ ] Only one mission is active. Choosing another theme cannot silently replace an active mission; show a clear resume/rest choice and retain the grown-up abandonment control.
+- [ ] Persist the exact story and step across reload, garden completion, and theme/date changes. If its holiday is disabled, explain the grown-up choices without erasing progress silently or exposing disabled holiday art.
+- [ ] Keep missions available for replay without deadlines or consecutive-day requirements. Active breaks pause missions normally.
+
+### LG-40 — Keep themed play clear, calm, and accessible
+
+**Status:** Backlog · **Dependencies:** LG-36–LG-39
+
+**Story:** As a family, we want the fun scenery to remain easy to understand and comfortable on every supported screen.
+
+**Acceptance criteria:**
+- [ ] Every theme preserves readable prompts, recognizable letters/numerals, large touch targets, visible focus, and answer feedback understandable without color alone.
+- [ ] Countable learning objects remain clearly separated from theme scenery and decorations; verify every quantity layout up to the configured limit of ten.
+- [ ] Spoken labels/setups are understandable and use the established single narration channel. Theme changes do not interrupt a prompt or celebration; mute and audio-failure guidance remain usable.
+- [ ] Honor reduced motion and sound-off play; no essential instruction depends on animation, a flashing effect, or background audio.
+- [ ] Theme assets work in offline-file play and have graceful fallbacks when an image/emoji is unavailable. Keep asset loading bounded so a theme does not fetch every other theme unnecessarily.
+- [ ] Long labels, narrow/landscape layouts, settings dialogs, and the full break lock remain usable in all themes.
+- [ ] Switching themes never changes the learning target, re-enables an answered card, awards a flower, or bypasses a break. Automated tests cover these invariants and malformed imported theme/variant fields.
+
+### LG-41 — Verify seasonal fun with families and real devices
+
+**Status:** Backlog · **Dependencies:** LG-35–LG-40
+
+**Story:** As the product owner, I want evidence that themes feel fun and optional without harming learning, reliability, or family choice.
+
+**Acceptance criteria:**
+- [ ] Record actual iPhone, iPad, and laptop results for seasonal/holiday selection, readable activities, sound, collections, and narration; distinguish device observations from automated/viewport checks.
+- [ ] Verify manual selection, enabled/disabled holidays, supported automatic date windows, overlapping windows, hemisphere preferences, and reopening after a calendar change.
+- [ ] Reopen during a themed reveal, decoration choice/placement, mission step, name round, and break window; earned rewards and learning progress are neither lost nor duplicated.
+- [ ] Export/import a themed garden and migrate a pre-theme save; missing theme fields default to Everyday, while invalid data leaves the current garden unchanged.
+- [ ] Try reduced motion, mute, missing assets, offline-file play, and phone/tablet portrait and landscape with theme scenery enabled.
+- [ ] Ask willing families whether themes are welcoming, age-appropriate, understandable, and easy to opt out of; gather minimal anonymous feedback without inferring beliefs or collecting unnecessary child information.
+- [ ] Record content-review results and fix blocking cultural, accessibility, audio, layout, and save issues before marking theme work Done.
+
+**Release gate:** Seasonal garden fun is ready when the supported themes have reviewed content and blocking verification issues are resolved.
 
 ## Future learning proposals — refine before scheduling
 
