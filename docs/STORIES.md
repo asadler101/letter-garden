@@ -20,7 +20,8 @@ The repository and public URL retain **Letter Garden**. LG-01 introduces **Learn
 - **Implemented and published:** LG-01–LG-08 and LG-10–LG-21. The expansion shipped in [PR #2](https://github.com/asadler101/letter-garden/pull/2); narration, landscape letter flow, and automatic letter progression were updated in [PR #3](https://github.com/asadler101/letter-garden/pull/3), [PR #4](https://github.com/asadler101/letter-garden/pull/4), [PR #5](https://github.com/asadler101/letter-garden/pull/5), and [PR #6](https://github.com/asadler101/letter-garden/pull/6). The dated “not committed/published” implementation notes below describe the earlier work session and are superseded by these releases.
 - **Still open before full sign-off:** LG-03 backup/share/import on actual devices; LG-09 numbers/device verification; LG-15 saved decoration layouts across phone/tablet/laptop; LG-22 family testing. Other implemented cards retain In progress until their shared device, layout, accessibility, and listening checks are recorded. See [device checks](DEVICE-CHECKS.md) and [family checks](FAMILY-CHECKS.md).
 - **Audio follow-up:** latest iPhone recording restoration and letter/picture-word feedback shipped in PR #6; successful actual-device confirmation is still needed. Replacing the original synthetic recordings with a more natural narrator has not been delivered.
-- **New, not implemented:** LG-31–LG-34, grown-up-configured break times; LG-35–LG-41, optional seasonal/holiday themes, themed collections, and little missions.
+- **Break features in progress:** LG-31 configuration is implemented locally; LG-32 schedule timing is implemented locally; LG-33 locking is implemented locally; LG-34 verification remains open.
+- **New, not implemented:** LG-35–LG-41, optional seasonal/holiday themes, themed collections, and little missions.
 - **Future proposals, not scheduled:** LG-23–LG-26 shapes, colors, patterns, and early letter sounds; LG-27–LG-30 paid-offering research, iOS preparation/unlock, and optional paid web/cross-device saves.
 
 A published feature is not automatically a passed device/family test. The open checkboxes below remain the acceptance record.
@@ -447,60 +448,66 @@ These cards add optional breaks configured by grown-ups, not timed learning chal
 
 ### LG-31 — Configure named break times
 
-**Status:** Backlog · **Dependencies:** LG-02
+**Status:** Implemented locally; verification pending LG-34 · **Dependencies:** LG-02
 
 **Story:** As a grown-up, I want to create breaks with a name and a picture so our family can plan potty, stretch, lunch, or other time away from the game.
 
 **Acceptance criteria:**
-- [ ] Grown-up Settings can add, edit, enable/disable, and delete multiple break rules; breaks are optional and disabled until a grown-up configures them.
-- [ ] Each rule has a required custom display name with a reasonable length limit and safe text rendering.
-- [ ] Offer a curated emoji picker, including examples such as 🚽 potty, 🤸 stretch, 🍽️ lunch, 💧 water, and 🛋️ rest. A grown-up can choose the emoji independently of the name.
-- [ ] Each rule includes a configurable break duration and a schedule (LG-32); validate missing, zero/negative, or unsupported time values before saving.
-- [ ] Show a readable summary before saving, such as “🚽 Potty break — after 30 minutes of play, for 5 minutes.”
-- [ ] Persist rules in the browser save and compatible backups; editing breaks preserves all learning preferences, progress, missions, and collectibles.
-- [ ] Explain whether breaks are enabled and that these settings apply to this saved garden/browser.
+- [x] Grown-up Settings can add, edit, enable/disable, and delete multiple break rules; breaks are optional and disabled until a grown-up configures them.
+- [x] Each rule has a required custom display name with a reasonable length limit and safe text rendering.
+- [x] Offer a curated emoji picker, including examples such as 🚽 potty, 🤸 stretch, 🍽️ lunch, 💧 water, and 🛋️ rest. A grown-up can choose the emoji independently of the name.
+- [x] Each rule includes a configurable break duration and a schedule (LG-32); validate missing, zero/negative, or unsupported time values before saving.
+- [x] Show a readable summary before saving, such as “🚽 Potty break — after 30 minutes of play, for 5 minutes.”
+- [x] Persist rules in the browser save and compatible backups; editing breaks preserves all learning preferences, progress, missions, and collectibles.
+- [x] Explain whether breaks are enabled and that these settings apply to this saved garden/browser.
 
 **Out of scope:** Child accounts, syncing schedules to other devices, and operating-system parental controls.
 
+**Implementation notes (November 19, 2026):** Configuration CRUD, separate draft/summary/save flow, bounded Unicode names, curated pictures, strict versioned backup validation, older-save defaults, invalid-local-data retention and failed-write rollback are implemented. Existing data stays intact. All 131 silent Node regressions, app/server syntax checks and diff checks pass. LG-32/LG-33 now provide runtime scheduling and full-window play pauses. Limited silent browser checks are recorded in [BREAK-CHECKS.md](BREAK-CHECKS.md); actual-device, full accessibility and family checks remain open. Not committed or published; shared definition-of-done checks remain open.
+
 ### LG-32 — Schedule when a break begins and ends
 
-**Status:** Backlog · **Dependencies:** LG-31
+**Status:** Implemented locally; verification pending LG-34 · **Dependencies:** LG-31
 
 **Story:** As a grown-up, I want to configure when a break happens and how long it lasts so breaks fit our family’s routine.
 
 **Acceptance criteria:**
-- [ ] Support a fixed device-local start time with selectable days (for example lunch at 12:00 for 30 minutes), and a recurring active-play interval (for example a stretch after every 20 minutes of play for 2 minutes).
-- [ ] Active-play intervals accumulate only while learning activities are visible and usable, including exploration; time in settings, collections, a break, or the background does not count as active learning play.
-- [ ] Remember accumulated active-play time across navigation/reload; a completed interval break resets only its own interval. Editing a rule explains any reset before it happens.
-- [ ] Calculate fixed-clock break windows from the saved schedule and device-local time; reopening during a scheduled window enters the break immediately. An elapsed window does not start a retroactive break.
-- [ ] A break already triggered by an active-play interval keeps its saved end time across reload/backgrounding; time away counts toward the break duration.
-- [ ] Handle windows crossing midnight and overlapping rules deterministically: play stays locked until every active window ends, with no brief unlocked gap or duplicate reset.
-- [ ] Re-evaluate schedules on opening, returning to the foreground, and time/day changes. Define and document behavior for local timezone and daylight-saving changes; do not claim tamper-proof clock enforcement.
-- [ ] Automated tests cover time boundaries, exact end times, overlap, midnight, reload, backgrounding, and independently configured intervals.
+- [x] Support a fixed device-local start time with selectable days (for example lunch at 12:00 for 30 minutes), and a recurring active-play interval (for example a stretch after every 20 minutes of play for 2 minutes).
+- [x] Active-play intervals accumulate only while learning activities are visible and usable, including exploration; time in settings, collections, a break, or the background does not count as active learning play.
+- [x] Remember accumulated active-play time across navigation/reload; a completed interval break resets only its own interval. Editing a rule explains any reset before it happens.
+- [x] Calculate fixed-clock break windows from the saved schedule and device-local time; reopening during a scheduled window enters the break immediately. An elapsed window does not start a retroactive break.
+- [x] A break already triggered by an active-play interval keeps its saved end time across reload/backgrounding; time away counts toward the break duration.
+- [x] Handle windows crossing midnight and overlapping rules deterministically: play stays locked until every active window ends, with no brief unlocked gap or duplicate reset.
+- [x] Re-evaluate schedules on opening, returning to the foreground, and time/day changes. Define and document behavior for local timezone and daylight-saving changes; do not claim tamper-proof clock enforcement.
+- [x] Automated tests cover time boundaries, exact end times, overlap, midnight, reload, backgrounding, and independently configured intervals.
 
 **Out of scope:** Push notifications while the website is closed, calendar integration, and server time/account services.
 
+**Implementation notes (November 19, 2026):** Pure local-window/interval calculations, independent versioned runtime and strict backup validation are implemented. Navigation/settings/visibility/page lifecycle hooks checkpoint partial learning time; one-second checks re-evaluate clocks and overlaps. Configuration edits reset only changed signatures. Missing runtime initializes safely; invalid local runtime is retained with interval guidance. Storage failure retains in-memory timing with the existing save warning. README documents timezone/DST, backward clocks and bounded-gap policy. Automated scheduling regressions cover boundaries, midnight, overlaps, independent intervals, reload/background/settings, edits, invalid backups, failed writes and DST. LG-33 now locks throughout all active overlaps. Limited silent browser evidence and remaining device/family checks are recorded in [BREAK-CHECKS.md](BREAK-CHECKS.md). Not committed or published.
+
 ### LG-33 — Alert the child and pause play for the whole break
 
-**Status:** Backlog · **Dependencies:** LG-32
+**Status:** Implemented locally; verification pending LG-34 · **Dependencies:** LG-32
 
 **Story:** As a family, we want a clear “break time” alert and no app play during its window so the child can take the planned break.
 
 **Acceptance criteria:**
-- [ ] At break start, show a full-app, picture-led break screen with the configured emoji/name and a clear “It’s break time” message. Indicate when play becomes available again.
-- [ ] Give a gentle spoken alert when sound is enabled, using dependable generic narration for custom names; do not upload names for speech. Muted play still gives a clear visual alert, and reduced motion is respected.
-- [ ] Stop learning narration and pending automatic advancement; block activities, exploration, missions, rewards/reveals, decoration, and collections for the full active break window.
-- [ ] Enforce the lock before accepting learning/reward actions, not only with a dismissible overlay. Home/back navigation, reload, and stale answer/reward handlers cannot bypass it or earn progress during the break.
-- [ ] Preserve every earned flower and reward, plus mission/name progress, if a break interrupts an activity or reward screen. Unfinished rounds may restart safely after the break without credit or lost earned progress.
-- [ ] Child controls cannot dismiss the lock early. A clearly separated grown-up verification step permits schedule management or an explicit end/skip for the current occurrence, without disabling future breaks accidentally.
-- [ ] Keep the grown-up access and help reachable during a break. Disabling/deleting/editing a rule while it is active clearly explains its effect; skipping one overlapping break does not unlock other active breaks.
-- [ ] When the last active break ends, offer a large “Back to the garden” action; do not resume narration or answer submission unexpectedly.
+- [x] At break start, show a full-app, picture-led break screen with the configured emoji/name and a clear “It’s break time” message. Indicate when play becomes available again.
+- [x] Give a gentle spoken alert when sound is enabled, using dependable generic narration for custom names; do not upload names for speech. Muted play still gives a clear visual alert, and reduced motion is respected.
+- [x] Stop learning narration and pending automatic advancement; block activities, exploration, missions, rewards/reveals, decoration, and collections for the full active break window.
+- [x] Enforce the lock before accepting learning/reward actions, not only with a dismissible overlay. Home/back navigation, reload, and stale answer/reward handlers cannot bypass it or earn progress during the break.
+- [x] Preserve every earned flower and reward, plus mission/name progress, if a break interrupts an activity or reward screen. Unfinished rounds may restart safely after the break without credit or lost earned progress.
+- [x] Child controls cannot dismiss the lock early. A clearly separated grown-up verification step permits schedule management or an explicit end/skip for the current occurrence, without disabling future breaks accidentally.
+- [x] Keep the grown-up access and help reachable during a break. Disabling/deleting/editing a rule while it is active clearly explains its effect; skipping one overlapping break does not unlock other active breaks.
+- [x] When the last active break ends, offer a large “Back to the garden” action; do not resume narration or answer submission unexpectedly.
 
 **Out of scope:** Locking the phone/tablet, punitive feedback, and removing learning rewards for taking a break.
 
+**Implementation notes (November 19, 2026):** Full-app break content, generic bundled narration, action-boundary enforcement and stale-handler invalidation are implemented. Audio/auto-next stop, earned state survives, and returning after the last break requires a deliberate tap. Grown-up verification protects settings opened before or during a deadline; its two-digit addition check is explicitly not a security PIN. Transactional occurrence skips preserve future rules and overlaps, survive reload/backup, and are excluded from interval accounting. Active-rule UI explains edit/disable/delete effects; malformed runtime guidance remains accessible. Every accepted synchronous child operation shares one timestamp to avoid nested-helper boundary races. The local audio server now serves only manifest IDs with existing range/path safeguards. All 160 silent Node regressions, JavaScript syntax and diff checks pass. Automated/DOM simulation is not actual-device or family evidence; LG-34 and the shared definition of done remain open. No commit or publication performed in this implementation stage.
+
 ### LG-34 — Verify break times across devices and saved progress
 
-**Status:** Backlog · **Dependencies:** LG-31–LG-33
+**Status:** In progress; automated and limited browser checks passed, physical/family checks not run · **Dependencies:** LG-31–LG-33
 
 **Story:** As a family, we want breaks to be dependable on our devices without losing the garden or unexpectedly allowing play.
 
@@ -512,6 +519,8 @@ These cards add optional breaks configured by grown-ups, not timed learning chal
 - [ ] Verify backup export/import with break rules and an active break. Missing old break fields mean no configured breaks; invalid schedules reject import without replacing the garden.
 - [ ] Verify unavailable/failed storage produces clear grown-up guidance and a working in-memory break; do not claim persistence across reload if saving fails.
 - [ ] Observe whether a willing family understands the name/emoji alert and can take and finish a break without treating it as punishment; record blockers without unnecessary child information.
+
+**Verification notes (November 19, 2026):** [BREAK-CHECKS.md](BREAK-CHECKS.md) records 166 passing silent regressions, 204 WAV structural/content checks, targeted interruption coverage, limited silent browser observations, and the remaining physical checklist. Actual iPhone/iPad/laptop, listening, full accessibility and willing-family checks are NOT RUN; the acceptance checks above remain open. No physical-device or family sign-off is implied.
 
 **Release gate:** Break times are ready for family use when blocking issues are fixed and this card’s results are recorded.
 

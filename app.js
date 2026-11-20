@@ -71,19 +71,19 @@ const missionStories={
 };
 let missionNeedsStage=false,missionStageId=0;
 function storyFor(mission){return mission?.kind==='story'?missionStories[mission.story]:null;}
-function missionStage(){
+function missionStage(){if(childActionBlocked())return;
   const mission=state.mission,story=storyFor(mission);if(!story||!validMission(mission))return;
-  missionRunning=true;missionNeedsStage=false;mode='mission-stage';target=null;stopAudio();
+  missionRunning=true;missionNeedsStage=false;if(!changeLearningMode('mission-stage'))return;target=null;stopAudio();
   const view=++missionStageId,step=mission.progress,text=mission.complete?story.ending:story.steps[step];
   app.innerHTML=`<section class="play-area"><h1>${story.title}</h1>${missionProgress()}<p>${text}</p><button class="listen-button" id="mission-listen">♫ Hear our story</button>${mission.complete?'':'<button class="primary" id="mission-continue">Let’s help →</button>'}<button class="rest-button" id="mission-home">Rest at home</button></section>`;
   const current=()=>mode==='mission-stage'&&view===missionStageId;
   const narrate=()=>speak(text,`mission-${mission.story}-${step}`);
-  document.getElementById('mission-listen').onclick=()=>{if(current())narrate();};
-  document.getElementById('mission-home').onclick=()=>{if(current())home();};
-  if(!mission.complete)document.getElementById('mission-continue').onclick=()=>{if(current())start(mission.activity,true);};
+  document.getElementById('mission-listen').onclick=()=>{if(childActionBlocked())return;if(current())narrate();};
+  document.getElementById('mission-home').onclick=()=>{if(childActionBlocked())return;if(current())home();};
+  if(!mission.complete)document.getElementById('mission-continue').onclick=()=>{if(childActionBlocked())return;if(current())start(mission.activity,true);};
   narrate();window.scrollTo(0,0);
 }
-function startStoryMission(key){
+function startStoryMission(key){if(childActionBlocked())return;
   if(!Object.hasOwn(missionStories,key))return;
   if(Object.hasOwn(state,'mission')&&!validMission(state.mission)){toast('Ask a grown-up to check this mission in settings.');return;}
   if(validMission(state.mission)&&!state.mission.complete){if(state.mission.kind==='story')missionStage();else toast('Your little mission is waiting. Finish it or ask a grown-up to put it away.');return;}
@@ -108,17 +108,17 @@ function missionProgress(){
 function missionHome(){
   return missionProgress()+`<button class="rest-button" id="little-mission">${validMission(state.mission)&&!state.mission.complete?'Continue little mission':'🌱 A little mission'} →</button>`;
 }
-function missionMenu(){
-  missionRunning=false;mode='mission';target=null;stopAudio();
+function missionMenu(){if(childActionBlocked())return;
+  missionRunning=false;if(!changeLearningMode('mission'))return;target=null;stopAudio();
   const mission=validMission(state.mission)?state.mission:null;
   app.innerHTML=`<div class="play-nav"><button class="back" id="mission-back">← Learning Garden home</button></div><section class="play-area"><h1>Choose a little mission</h1>${Object.entries(missionStories).map(([key,story])=>`<button class="rest-button" id="story-${key}">${story.pictures[2]} ${story.title}</button>`).join('')}${missionProgress()}<p>Find letters or numbers together. Each discovery grows one flower.</p><p>Choose any activity, or go home for free play. Your mission waits for you.</p><div class="mission-actions">${missionModes.map((activity,i)=>`<button class="rest-button" id="mission-${activity}">${['🔤 Find a letter','A a Big & little','🔢 Find a number','🍎 Count with me','🍎 🔢 How many?'][i]}</button>`).join('')}</div>${mission&&!mission.complete?'<button class="primary" id="resume-mission">Continue where we left off →</button>':''}</section>`;
   document.getElementById('mission-back').onclick=home;
-  for(const key of Object.keys(missionStories))document.getElementById('story-'+key).onclick=()=>{if(mode==='mission')startStoryMission(key);};
-  for(const activity of missionModes)document.getElementById('mission-'+activity).onclick=()=>{if(mode==='mission')startMission(activity);};
-  if(mission&&!mission.complete)document.getElementById('resume-mission').onclick=()=>{if(mode==='mission')startMission(mission.activity);};
+  for(const key of Object.keys(missionStories))document.getElementById('story-'+key).onclick=()=>{if(childActionBlocked())return;if(mode==='mission')startStoryMission(key);};
+  for(const activity of missionModes)document.getElementById('mission-'+activity).onclick=()=>{if(childActionBlocked())return;if(mode==='mission')startMission(activity);};
+  if(mission&&!mission.complete)document.getElementById('resume-mission').onclick=()=>{if(childActionBlocked())return;if(mode==='mission')startMission(mission.activity);};
   window.scrollTo(0,0);
 }
-function startMission(activity){
+function startMission(activity){if(childActionBlocked())return;
   if(!missionModes.includes(activity))return;
   if(Object.hasOwn(state,'mission')&&!validMission(state.mission)){toast('This mission could not be read. A grown-up can abandon it in settings.');return;}
   if(storyFor(state.mission)&&!state.mission.complete){missionStage();return;}
@@ -136,7 +136,7 @@ function validPracticeHistory(value){
   const distinct=(items,max,test)=>Array.isArray(items)&&items.length<=max&&new Set(items).size===items.length&&items.every(test);
   return distinct(value.activities,8,item=>Object.hasOwn(practiceActivities,item))&&distinct(value.letters,26,item=>typeof item==='string'&&/^[A-Z]$/.test(item))&&distinct(value.numbers,10,item=>Number.isInteger(item)&&item>=1&&item<=10)&&Number.isInteger(value.discoveries)&&value.discoveries>=0&&value.discoveries<=999999;
 }
-function recordPractice(activity,item,save=true){
+function recordPractice(activity,item,save=true){if(childActionBlocked())return;
   if(!validPracticeHistory(state.practiceHistory))return;
   const history=state.practiceHistory, before=JSON.stringify(history);
   const add=(items,value)=>{if(!items.includes(value))items.push(value);};
@@ -154,7 +154,7 @@ function practiceSummary(){
   return `Subjects explored: ${subjects.join(', ')||'none recorded yet'}. Activities tried: ${history.activities.map(item=>practiceActivities[item]).join(', ')||'none recorded yet'}. Letters practiced or explored: ${history.letters.join(', ')||'none recorded yet'}. Numbers practiced: ${history.numbers.join(', ')||'none recorded yet'}. Discoveries since tracking began or history was cleared: ${history.discoveries}${history.discoveries===999999?' (limit reached)':''}.`;
 }
 function preparePracticeSettings(){document.getElementById('practice-summary').textContent=practiceSummary();document.getElementById('confirm-clear-history').hidden=true;}
-function clearPracticeHistory(){
+function clearPracticeHistory(){if(!parentBreakAccess())return false;
   const previous=state.practiceHistory;state.practiceHistory=emptyPracticeHistory();
   if(!persist()){state.practiceHistory=previous;document.getElementById('practice-summary').textContent='History could not be cleared. Try again when saving is available.';return;}
   preparePracticeSettings();
@@ -203,6 +203,7 @@ let state = migrateDecorationRewards(migrateVisitorRewards(loadSave()));
 // Only known buddy identifiers may reach the picture/text renderer.
 if(!buddyFor(state.buddy)) delete state.buddy;
 if(!Object.hasOwn(state,'practiceHistory'))state.practiceHistory=emptyPracticeHistory();
+if(!Object.hasOwn(state,'breaks'))state.breaks=emptyBreaks();
 // Remove migrated flat fields; all new writes use the versioned structure.
 for(const key of ['flowers','patchFlowers','sound','set','custom','case']) delete state[key];
 // Quiet previews never change the child's saved sound preference.
@@ -229,8 +230,8 @@ function validNamePractice(value,preferences=state.preferences){
   return value!==null&&typeof value==='object'&&!Array.isArray(value)&&value.profile===preferences.name.display&&Number.isInteger(value.index)&&value.index>=0&&value.index<=count&&count>0&&typeof value.complete==='boolean'&&value.complete===(value.index===count);
 }
 let nameViewId=0;
-function nameRound(){
-  missionRunning=false;mode='name';target=null;stopAudio();const id=++nameViewId;
+function nameRound(){if(childActionBlocked())return;
+  missionRunning=false;if(!changeLearningMode('name'))return;target=null;stopAudio();const id=++nameViewId;
   const profile=state.preferences.name;
   const positions=validName(profile)?nameLetters(profile.display):[],playable=positions.filter(item=>item.letter);
   if(Object.hasOwn(state,'namePractice')&&!validNamePractice(state.namePractice)){
@@ -241,21 +242,21 @@ function nameRound(){
   document.getElementById('back').onclick=letterGarden;
   const display=document.getElementById('name-positions');
   let found=0;for(const item of positions){const span=document.createElement('span');span.className='name-position';span.id='name-position-'+item.index;span.textContent=!item.letter||found++<progress.index?item.character:'＿';span.setAttribute('aria-label',!item.letter?'Displayed character '+item.character:found<=progress.index?'Found '+item.letter:'Letter waiting');display.append(span);}
-  if(playable.length&&state.garden.patchFlowers===5)document.getElementById('name-garden').onclick=()=>{if(mode==='name'&&id===nameViewId){rewardMode='name';gardenComplete(true);}};
+  if(playable.length&&state.garden.patchFlowers===5)document.getElementById('name-garden').onclick=()=>{if(childActionBlocked())return;if(mode==='name'&&id===nameViewId){rewardMode='name';gardenComplete(true);}};
   if(!playable.length)return;
-  if(progress.complete){const cheer=()=>speak('You found your name!','name-complete');document.getElementById('name-listen').onclick=()=>{if(mode==='name'&&id===nameViewId)cheer();};cheer();return;}
+  if(progress.complete){const cheer=()=>speak('You found your name!','name-complete');document.getElementById('name-listen').onclick=()=>{if(childActionBlocked())return;if(mode==='name'&&id===nameViewId)cheer();};cheer();return;}
   if(state.garden.patchFlowers===5){rewardMode='name';gardenComplete(false);return;}
   const letter=playable[progress.index].letter;document.getElementById('name-target').textContent=letter;
   const promptName=()=>speak(`Can you find the letter ${letter}?`,`find-${letter}`);
-  document.getElementById('name-listen').onclick=()=>{if(mode==='name'&&id===nameViewId)promptName();};
+  document.getElementById('name-listen').onclick=()=>{if(childActionBlocked())return;if(mode==='name'&&id===nameViewId)promptName();};
   const choices=shuffle([letter,...shuffle(alphabet.map(item=>item[0]).filter(item=>item!==letter)).slice(0,2)]);
   document.getElementById('name-choices').innerHTML=choices.map(item=>`<button class="letter-choice" data-name-letter="${item}">${item}</button>`).join('');
   let done=false;
   app.querySelectorAll('[data-name-letter]').forEach(button=>button.onclick=()=>nameAnswer(button.dataset.nameLetter,id,letter,progress,()=>done,value=>done=value));
-  document.getElementById('name-next').onclick=()=>{if(mode==='name'&&id===nameViewId&&done)nameRound();};
+  document.getElementById('name-next').onclick=()=>{if(childActionBlocked())return;if(mode==='name'&&id===nameViewId&&done)nameRound();};
   promptName();
 }
-function nameAnswer(choice,id,letter,progress,isDone,setDone){
+function nameAnswer(choice,id,letter,progress,isDone,setDone){if(childActionBlocked())return;
   if(mode!=='name'||id!==nameViewId||isDone()||state.garden.patchFlowers===5)return;
   if(!/^[A-Z]$/.test(choice))return;
   recordPractice('name',letter,choice!==letter);
@@ -283,6 +284,256 @@ function prepareNameSettings(){
   updateNamePreview();
   if(Object.hasOwn(state.preferences,'name')&&!validName(saved))document.getElementById('name-preview').textContent='The saved name could not be read. It has been kept. Enter a replacement or leave empty and save to remove it.';
 }
+// Break configuration is independent of runtime occurrence/accounting state (LG-32).
+const BREAK_VERSION=1, MAX_BREAK_RULES=20;
+const breakPictures=['🚽','🤸','🍽️','💧','🛋️','🌳','🛏️','🧼'];
+const breakDays=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function emptyBreaks(){return {version:1,rules:[]};}
+function validBreakRule(rule){
+  if(!rule||typeof rule!=='object'||Array.isArray(rule))return false;
+  const keys=['id','name','emoji','enabled','kind','durationMinutes',...(rule.kind==='clock'?['startTime','days']:['intervalMinutes'])].sort();
+  return Object.keys(rule).sort().join(',')===keys.join(',') && typeof rule.id==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(rule.id) &&
+    validName({display:rule.name})&&rule.name.trim().length>0&&breakPictures.includes(rule.emoji)&&typeof rule.enabled==='boolean'&&
+    Number.isInteger(rule.durationMinutes)&&rule.durationMinutes>=1&&rule.durationMinutes<=240&&
+    (rule.kind==='clock' ? typeof rule.startTime==='string'&&/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(rule.startTime)&&Array.isArray(rule.days)&&rule.days.length>=1&&rule.days.length<=7&&new Set(rule.days).size===rule.days.length&&rule.days.every(day=>Number.isInteger(day)&&day>=0&&day<=6) : rule.kind==='interval'&&Number.isInteger(rule.intervalMinutes)&&rule.intervalMinutes>=1&&rule.intervalMinutes<=240);
+}
+function validBreaks(value){
+  return !!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')==='rules,version'&&value.version===BREAK_VERSION&&Array.isArray(value.rules)&&value.rules.length<=MAX_BREAK_RULES&&value.rules.every(validBreakRule)&&new Set(value.rules.map(rule=>rule.id)).size===value.rules.length;
+}
+// Runtime uses no saved "last tick": reopening never credits time spent away.
+const BREAK_MINUTE=60000, BREAK_MAX_GAP=60000;
+const learningBreakModes=['find','match','explore','name','number','count','quantity'];
+function breakTimestamp(value){return Number.isSafeInteger(value)&&value>=0&&value<=8640000000000000-172800000;}
+function breakRuleSignature(rule){
+  return JSON.stringify([rule.id,rule.name,rule.emoji,rule.enabled,rule.kind,rule.durationMinutes,
+    rule.kind==='clock'?rule.startTime:rule.intervalMinutes,rule.kind==='clock'?[...rule.days].sort():null]);
+}
+function freshBreakRuntime(rule){return {id:rule.id,signature:breakRuleSignature(rule),elapsedMs:0,breakStart:null,breakEnd:null};}
+function emptyBreakRuntime(config=emptyBreaks()){return {version:1,rules:validBreaks(config)?config.rules.map(freshBreakRuntime):[]};}
+function validBreakRuntime(value,config,consistent=true){
+  if(!value||typeof value!=='object'||Array.isArray(value)||!['rules,version','rules,skipped,version'].includes(Object.keys(value).sort().join(','))||value.version!==1||!Array.isArray(value.rules)||value.rules.length>MAX_BREAK_RULES||new Set(value.rules.map(item=>item?.id)).size!==value.rules.length)return false;
+  if(Object.hasOwn(value,'skipped')&&!validBreakSkips(value.skipped,config,consistent))return false;
+  if(!value.rules.every(item=>item&&typeof item==='object'&&!Array.isArray(item)&&Object.keys(item).sort().join(',')==='breakEnd,breakStart,elapsedMs,id,signature'&&typeof item.id==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(item.id)&&typeof item.signature==='string'&&item.signature.length<=1000&&Number.isSafeInteger(item.elapsedMs)&&item.elapsedMs>=0&&item.elapsedMs<240*BREAK_MINUTE&&
+    ((item.breakStart===null&&item.breakEnd===null)||(breakTimestamp(item.breakStart)&&breakTimestamp(item.breakEnd)&&item.breakEnd>item.breakStart&&item.breakEnd-item.breakStart<=240*BREAK_MINUTE))))return false;
+  if(!consistent)return true;
+  return validBreaks(config)&&value.rules.length===config.rules.length&&config.rules.every(rule=>{
+    const item=value.rules.find(item=>item.id===rule.id);
+    return item&&item.signature===breakRuleSignature(rule)&&(rule.kind==='interval'&&rule.enabled?
+      item.elapsedMs<rule.intervalMinutes*BREAK_MINUTE&&(item.breakEnd===null||(item.elapsedMs===0&&item.breakEnd-item.breakStart===rule.durationMinutes*BREAK_MINUTE)):
+      item.elapsedMs===0&&item.breakEnd===null);
+  });
+}
+function reconciledBreakRuntime(config,runtime){
+  if(!validBreaks(config)||!validBreakRuntime(runtime,config,false))return null;
+  if(config.rules.some(rule=>{const item=runtime.rules.find(item=>item.id===rule.id&&item.signature===breakRuleSignature(rule));return item&&!validBreakRuntime({version:1,rules:[item]},{version:1,rules:[rule]});}))return null;
+  return {version:1,rules:config.rules.map(rule=>{
+    const prior=runtime.rules.find(item=>item.id===rule.id&&item.signature===breakRuleSignature(rule));
+    return prior&&validBreakRuntime({version:1,rules:[prior]},{version:1,rules:[rule]})?{...prior}:freshBreakRuntime(rule);
+  }),...(runtime.skipped?{skipped:runtime.skipped.filter(item=>config.rules.some(rule=>rule.id===item.id&&breakRuleSignature(rule)===item.signature))}:{})};
+}
+function validBreakSkips(items,config,consistent=true){
+  return Array.isArray(items)&&items.length<=20&&new Set(items.map(item=>item?.id)).size===items.length&&items.every(item=>item&&Object.keys(item).sort().join(',')==='end,id,signature,start'&&typeof item.id==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(item.id)&&typeof item.signature==='string'&&item.signature.length<=1000&&breakTimestamp(item.start)&&breakTimestamp(item.end)&&item.end>item.start&&item.end-item.start<=240*BREAK_MINUTE&&(!consistent||config.rules.some(rule=>rule.id===item.id&&breakRuleSignature(rule)===item.signature&&item.end-item.start===rule.durationMinutes*BREAK_MINUTE)));
+}
+function skippedBreak(item,runtime){return runtime?.skipped?.some(skip=>skip.id===item.id&&skip.start===item.start&&skip.end===item.end)||false;}
+// JS local Date selects the earlier repeated DST time and moves nonexistent times forward.
+// A duration is elapsed minutes, even across DST; yesterday's start day owns midnight windows.
+function clockBreakWindows(config,from,to=from){
+  if(!validBreaks(config)||!breakTimestamp(from)||!breakTimestamp(to)||to<from||to-from>BREAK_MAX_GAP)return [];
+  const windows=[];
+  for(const rule of config.rules.filter(rule=>rule.enabled&&rule.kind==='clock')){
+    const [hour,minute]=rule.startTime.split(':').map(Number);
+    for(let offset=-1;offset<=1;offset++){
+      const date=new Date(from);date.setHours(12,0,0,0);date.setDate(date.getDate()+offset);
+      if(!rule.days.includes(date.getDay()))continue;
+      date.setHours(hour,minute,0,0);const start=date.getTime(),end=start+rule.durationMinutes*BREAK_MINUTE;
+      if(start<=to&&end>from)windows.push({id:rule.id,start,end,kind:'clock'});
+    }
+  }
+  return windows.sort((a,b)=>a.start-b.start||a.id.localeCompare(b.id));
+}
+function calculatedActiveBreaks(config,runtime,now){
+  if(!breakTimestamp(now)||!validBreaks(config))return [];
+  const result=clockBreakWindows(config,now).filter(item=>item.start<=now&&now<item.end);
+  if(validBreakRuntime(runtime,config))for(const item of runtime.rules){
+    if(item.breakStart!==null&&item.breakStart<=now&&now<item.breakEnd)result.push({id:item.id,start:item.breakStart,end:item.breakEnd,kind:'interval'});
+  }
+  return result.filter(item=>!skippedBreak(item,validBreakRuntime(runtime,config)?runtime:null)).sort((a,b)=>a.end-b.end||a.id.localeCompare(b.id));
+}
+// Pure advancement splits at every clock/interval boundary, freezing all counters whenever any
+// break is active. Simultaneously due intervals trigger together; expired windows never replay.
+function advanceBreakRuntime(config,runtime,from,to,playing){
+  if(!validBreakRuntime(runtime,config)||!breakTimestamp(to))return runtime;
+  const next={version:1,rules:runtime.rules.map(item=>({...item})),...(runtime.skipped?{skipped:runtime.skipped.map(item=>({...item}))}:{})};
+  for(const item of next.rules)if(item.breakEnd!==null&&(item.breakEnd<=to||item.breakStart>to||skippedBreak({id:item.id,start:item.breakStart,end:item.breakEnd},runtime))){item.breakStart=null;item.breakEnd=null;}
+  if(!playing||!breakTimestamp(from)||to<from||to-from>BREAK_MAX_GAP)return next;
+  // Keep windows that expire during this tick until their exact boundary is processed.
+  for(let i=0;i<next.rules.length;i++)if(runtime.rules[i].breakStart!==null&&runtime.rules[i].breakStart<=from&&runtime.rules[i].breakEnd>from&&!skippedBreak({id:runtime.rules[i].id,start:runtime.rules[i].breakStart,end:runtime.rules[i].breakEnd},runtime))Object.assign(next.rules[i],runtime.rules[i]);
+  const clocks=clockBreakWindows(config,from,to).filter(item=>!skippedBreak(item,runtime)),intervals=config.rules.filter(rule=>rule.enabled&&rule.kind==='interval');
+  let cursor=from;
+  while(cursor<to){
+    for(const item of next.rules)if(item.breakEnd!==null&&item.breakEnd<=cursor){item.breakStart=null;item.breakEnd=null;}
+    const windows=[...clocks,...next.rules.filter(item=>item.breakEnd!==null).map(item=>({start:item.breakStart,end:item.breakEnd}))];
+    const blocked=windows.some(item=>item.start<=cursor&&cursor<item.end);
+    let boundary=Math.min(to,...windows.flatMap(item=>[item.start,item.end]).filter(time=>time>cursor));
+    if(!blocked)for(const rule of intervals){const item=next.rules.find(item=>item.id===rule.id);boundary=Math.min(boundary,cursor+rule.intervalMinutes*BREAK_MINUTE-item.elapsedMs);}
+    if(!blocked)for(const rule of intervals){const item=next.rules.find(item=>item.id===rule.id);item.elapsedMs+=boundary-cursor;}
+    cursor=boundary;
+    if(!blocked)for(const rule of intervals){const item=next.rules.find(item=>item.id===rule.id);if(item.elapsedMs>=rule.intervalMinutes*BREAK_MINUTE){item.elapsedMs=0;item.breakStart=cursor;item.breakEnd=cursor+rule.durationMinutes*BREAK_MINUTE;}}
+  }
+  for(const item of next.rules)if(item.breakEnd!==null&&item.breakEnd<=to){item.breakStart=null;item.breakEnd=null;}
+  return next;
+}
+let breakLastTick=null,breakWasPlaying=false,breakSchedulerTimer=null,breakSettingsOpen=false;
+let breakScheduleStateChanged=()=>{};
+let breakLastActiveSignature='';
+function activeBreaks(now=Date.now()){return calculatedActiveBreaks(state.breaks,state.breakRuntime,now);}
+function breakRuntimeStatus(){
+  return validBreaks(state.breaks)&&validBreakRuntime(state.breakRuntime,state.breaks)?'':'Saved break timing could not be read. Interval timing is unavailable; restore a valid backup. Other progress is kept.';
+}
+function breakLearningVisible(){
+  if(!learningBreakModes.includes(mode)||document.hidden||settings.open||breakSettingsOpen)return false;
+  if(mode==='name')return validName(state.preferences.name)&&nameLetters(state.preferences.name.display).some(item=>item.letter)&&
+    (!Object.hasOwn(state,'namePractice')||(validNamePractice(state.namePractice)&&!state.namePractice.complete));
+  return true;
+}
+function evaluateBreakSchedule(now=breakActionDepth?breakActionNow:Date.now()){
+  if(!breakTimestamp(now))return [];
+  if(validBreaks(state.breaks)&&validBreakRuntime(state.breakRuntime,state.breaks)){
+    const next=advanceBreakRuntime(state.breaks,state.breakRuntime,breakLastTick,now,breakWasPlaying);
+    if(JSON.stringify(next)!==JSON.stringify(state.breakRuntime)){state.breakRuntime=next;persist();}
+  }
+  breakLastTick=now;
+  breakWasPlaying=breakLearningVisible();
+  const active=activeBreaks(now),signature=JSON.stringify(active);
+  if(signature!==breakLastActiveSignature){breakLastActiveSignature=signature;breakScheduleStateChanged(active,now);}
+  return active;
+}
+function changeLearningMode(next){if(childActionBlocked())return false;mode=next;evaluateBreakSchedule();return mode===next;}
+function breakScheduleChanged(now=Date.now()){
+  if(!Object.hasOwn(state,'breakRuntime'))state.breakRuntime=emptyBreakRuntime(state.breaks);
+  const next=reconciledBreakRuntime(state.breaks,state.breakRuntime);
+  if(next)state.breakRuntime=next;
+  breakLastTick=now;breakWasPlaying=false;evaluateBreakSchedule(now);
+}
+function startBreakScheduler(){
+  clearTimeout(breakSchedulerTimer);
+  evaluateBreakSchedule();
+  breakSchedulerTimer=setTimeout(startBreakScheduler,1000);
+}
+
+// The break screen replaces child content. These guards also protect detached handlers.
+let breakActionDepth=0,breakActionNow=null;
+let breakLockShown=false,breakParentVerified=false,breakGateAnswer=null,breakEvaluating=false;
+function childActionBlocked(){
+  if(!breakActionDepth&&!breakEvaluating){breakEvaluating=true;try{evaluateBreakSchedule();}finally{breakEvaluating=false;}}
+  return activeBreaks(breakActionDepth?breakActionNow:Date.now()).length>0||breakLockShown;
+}
+function parentBreakAccess(){
+  evaluateBreakSchedule();
+  if(activeBreaks().length&&!breakParentVerified){showBreakGate();return false;}
+  return true;
+}
+function showBreakGate(){
+  stopAudio();breakParentVerified=false;
+  if(settings.open)settings.close();
+  breakSettingsOpen=false;
+  const first=10+Math.floor(Math.random()*80),second=10+Math.floor(Math.random()*80);
+  breakGateAnswer=first+second;
+  app.innerHTML='<section class="play-area break-screen"><h1>Grown-ups only</h1><p>This simple adult check keeps break controls separate from play. It is not a security PIN.</p><label id="break-gate-question" for="break-gate-answer"></label><input id="break-gate-answer" type="number" inputmode="numeric" autocomplete="off"><p id="break-gate-status" role="status"></p><button class="next-button" id="break-gate-submit">Continue to settings</button><button class="rest-button" id="break-gate-cancel">Back to break</button></section>';
+  document.getElementById('break-gate-question').textContent=`What is ${first} + ${second}?`;
+  document.getElementById('break-gate-submit').onclick=()=>{
+    if(Number(document.getElementById('break-gate-answer').value)!==breakGateAnswer){document.getElementById('break-gate-status').textContent='Please ask a grown-up to answer.';return;}
+    breakGateAnswer=null;breakParentVerified=true;renderBreakScreen(activeBreaks());openGrownupSettings();
+  };
+  document.getElementById('break-gate-cancel').onclick=()=>{breakGateAnswer=null;renderBreakScreen(activeBreaks());};
+  document.getElementById('break-gate-answer').focus();
+}
+function renderBreakScreen(active){
+  app.innerHTML='<section class="play-area break-screen" aria-labelledby="break-title"><div class="break-picture" id="break-picture" aria-hidden="true">🌿</div><h1 id="break-title">'+(active.length?'It’s break time':'Your break is finished')+'</h1><div id="active-break-list"></div><p>Your flowers, gifts and little discoveries are safe.</p>'+(active.length?'<button class="listen-button" id="break-listen">♫ Hear break time</button><p>Ask a grown-up for help or to manage this break.</p>':'<button class="next-button" id="break-return">Back to the garden 🌱</button>')+'</section>';
+  document.getElementById('break-picture').textContent=active.length?active.map(item=>state.breaks.rules.find(rule=>rule.id===item.id).emoji).join(' '):'🌿';
+  const list=document.getElementById('active-break-list');
+  for(const occurrence of active){const rule=state.breaks.rules.find(rule=>rule.id===occurrence.id),line=document.createElement('p');line.textContent=`${rule.emoji} ${rule.name} · Play available after ${new Date(occurrence.end).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}`;list.append(line);}
+  if(active.length)document.getElementById('break-listen').onclick=()=>{if(evaluateBreakSchedule().length)speak('It’s break time. Your garden will be here when you come back.','break-time');};
+  if(!active.length)document.getElementById('break-return').onclick=()=>{if(evaluateBreakSchedule().length)return;breakLockShown=false;home();};
+}
+function installBreakLock(){
+  breakScheduleStateChanged=(active)=>{
+    if(active.length){
+      const first=!breakLockShown;breakLockShown=true;breakGateAnswer=null;breakParentVerified=false;
+      mode='break';breakWasPlaying=false;target=null;answered=true;++letterRoundId;++numberRoundId;++nameViewId;++missionStageId;++visitorViewId;++decorationViewId;++gardenViewId;++myGardenViewId;
+      stopAudio();cancelLetterAdvance();
+      if(settings.open)settings.close();breakSettingsOpen=false;
+      renderBreakScreen(active);
+      if(first)speak('It’s break time. Your garden will be here when you come back.','break-time');
+    }else if(breakLockShown){breakGateAnswer=null;stopAudio();renderBreakScreen([]);}
+  };
+}
+function renderBreakSkipControls(){
+  const list=document.getElementById('break-current');list.innerHTML='';
+  for(const occurrence of activeBreaks()){
+    const rule=state.breaks.rules.find(rule=>rule.id===occurrence.id),button=document.createElement('button');button.className='audio-test';button.textContent=`End only this ${rule.emoji} ${rule.name} break now (future rules unchanged)`;button.onclick=()=>skipBreakOccurrence(occurrence);list.append(button);
+  }
+}
+function skipBreakOccurrence(occurrence){
+  if(!parentBreakAccess()||!breakParentVerified)return false;
+  const now=Date.now(),current=activeBreaks(now).find(item=>item.id===occurrence.id&&item.start===occurrence.start&&item.end===occurrence.end);
+  if(!current||!validBreakRuntime(state.breakRuntime,state.breaks)){document.getElementById('break-status').textContent='Break timing cannot be changed safely. Restore a valid backup or wait for the fixed break to end.';return false;}
+  const previous=state.breakRuntime,rule=state.breaks.rules.find(rule=>rule.id===current.id);
+  state.breakRuntime={...previous,skipped:[...(previous.skipped||[]).filter(item=>item.id!==current.id),{id:current.id,signature:breakRuleSignature(rule),start:current.start,end:current.end}]};
+  if(!persist()){state.breakRuntime=previous;document.getElementById('break-status').textContent='This break could not be ended because saving failed. It remains active. Please try again.';return false;}
+  evaluateBreakSchedule(now);prepareBreakSettings();return true;
+}
+function breakSummary(rule){return `${rule.emoji} ${rule.name} — ${rule.kind==='interval'?'after '+rule.intervalMinutes+' minutes of active play':'at '+rule.startTime+' on '+rule.days.map(day=>breakDays[day]).join(', ')}, for ${rule.durationMinutes} minutes. ${rule.enabled?'Enabled':'Disabled'}.`;}
+let editingBreakId=null;
+function commitBreaks(next){if(!parentBreakAccess())return false;
+  if(!validBreaks(state.breaks)||!validBreaks(next)){document.getElementById('break-status').textContent='Saved break settings could not be read. They are kept unchanged; restore a valid backup to replace them.';return false;}
+  evaluateBreakSchedule();
+  const previous=state.breaks,previousRuntime=state.breakRuntime;state.breaks=next;
+  const nextRuntime=reconciledBreakRuntime(next,state.breakRuntime);if(nextRuntime)state.breakRuntime=nextRuntime;
+  if(!persist()){state.breaks=previous;state.breakRuntime=previousRuntime;document.getElementById('break-status').textContent='Break changes could not be saved. Your previous rules are kept. Try again when saving is available.';return false;}
+  breakScheduleChanged();prepareBreakSettings();return true;
+}
+function saveBreakRule(rule){if(!parentBreakAccess())return false;
+  if(!validBreakRule(rule)||!validBreaks(state.breaks))return false;
+  const rules=state.breaks.rules.slice(),index=rules.findIndex(item=>item.id===rule.id);
+  if(index<0)rules.push({...rule});else rules[index]={...rule};
+  return commitBreaks({version:BREAK_VERSION,rules});
+}
+function deleteBreakRule(id){if(!parentBreakAccess())return false;return validBreaks(state.breaks)&&commitBreaks({version:BREAK_VERSION,rules:state.breaks.rules.filter(rule=>rule.id!==id)});}
+function setBreakEnabled(id,enabled){if(!parentBreakAccess())return false;const rule=validBreaks(state.breaks)&&state.breaks.rules.find(item=>item.id===id);return !!rule&&saveBreakRule({...rule,enabled});}
+function prepareBreakSettings(){
+  const valid=validBreaks(state.breaks),list=document.getElementById('break-list');list.innerHTML='';
+  document.getElementById('break-status').textContent=valid?(breakRuntimeStatus()||(state.breaks.rules.length?state.breaks.rules.filter(rule=>rule.enabled).length+' enabled break rules saved.':'No breaks configured.')):'Saved break settings could not be read. They are kept unchanged and editing is blocked. Restore a valid backup to replace them.';
+  document.getElementById('add-break').disabled=!valid||state.breaks.rules.length>=MAX_BREAK_RULES;
+  document.getElementById('break-editor').hidden=true;editingBreakId=null;
+  if(!valid)return;
+  renderBreakSkipControls();
+  for(const rule of state.breaks.rules){
+    const row=document.createElement('div'),summary=document.createElement('p');summary.textContent=breakSummary(rule)+(activeBreaks().some(item=>item.id===rule.id)?' Active now: editing, disabling or deleting this rule ends its current break and changes future scheduling. Other active breaks remain.':'');row.append(summary);
+    for(const [label,action] of [['Edit',()=>editBreakRule(rule.id)],[rule.enabled?'Disable':'Enable',()=>setBreakEnabled(rule.id,!rule.enabled)],['Delete',()=>deleteBreakRule(rule.id)]]){const button=document.createElement('button');button.type='button';button.className='audio-test';button.textContent=label;button.onclick=action;row.append(button);}list.append(row);
+  }
+}
+function editBreakRule(id=null){if(!parentBreakAccess())return false;
+  if(!validBreaks(state.breaks))return;
+  const rule=state.breaks.rules.find(item=>item.id===id);if(id&&!rule)return;
+  editingBreakId=id;document.getElementById('break-editor').hidden=false;
+  for(const [field,value] of Object.entries({name:rule?.name||'',emoji:rule?.emoji||breakPictures[0],kind:rule?.kind||'interval',duration:rule?.durationMinutes||5,interval:rule?.intervalMinutes||30,time:rule?.startTime||'12:00'}))document.getElementById('break-'+field).value=String(value);
+  document.getElementById('break-enabled').checked=rule?.enabled??false;
+  for(let day=0;day<7;day++)document.getElementById('break-day-'+day).checked=rule?.days?.includes(day)??true;
+  updateBreakPreview();
+}
+function breakDraft(){
+  const kind=document.getElementById('break-kind').value;
+  const rule={id:editingBreakId||'break-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10),name:document.getElementById('break-name').value,emoji:document.getElementById('break-emoji').value,enabled:!!document.getElementById('break-enabled').checked,kind,durationMinutes:Number(document.getElementById('break-duration').value)};
+  if(kind==='clock'){rule.startTime=document.getElementById('break-time').value;rule.days=Array.from({length:7},(_,day)=>day).filter(day=>document.getElementById('break-day-'+day).checked);}else rule.intervalMinutes=Number(document.getElementById('break-interval').value);
+  return rule;
+}
+function updateBreakPreview(){
+  const rule=breakDraft(),valid=validBreakRule(rule);document.getElementById('break-clock-fields').hidden=rule.kind!=='clock';document.getElementById('break-interval-fields').hidden=rule.kind!=='interval';
+  document.getElementById('break-preview').textContent=valid?breakSummary(rule)+(editingBreakId?' Saving changes resets only this rule’s accumulated play time and ends its current break; its new schedule applies immediately. Other rules keep their timing.':''):'Enter a name (1–40 characters), a picture, whole minutes from 1–240, and a valid schedule with at least one day.';
+  document.getElementById('save-break').disabled=!valid;return valid;
+}
+
 function updateStorageStatus(){
   const status = document.getElementById('storage-status');
   status.textContent = storageMessage;
@@ -316,6 +567,10 @@ function validateBackup(text){
     typeof letters.custom !== 'string' || !/^[A-Z]{0,26}$/.test(letters.custom) || (letters.set==='custom' && new Set(letters.custom).size<3) ||
     preferences.numbers === null || typeof preferences.numbers !== 'object' || Array.isArray(preferences.numbers) ||
     (Object.hasOwn(preferences.numbers,'max') && ![5,10].includes(preferences.numbers.max))) throw new Error('This backup has invalid or missing garden progress or settings.');
+  if(Object.hasOwn(saved,'breaks')&&!validBreaks(saved.breaks))throw new Error('This backup has invalid break rules or schedules.');
+  if(!Object.hasOwn(saved,'breaks'))saved.breaks=emptyBreaks();
+  if(Object.hasOwn(saved,'breakRuntime')&&!validBreakRuntime(saved.breakRuntime,saved.breaks))throw new Error('This backup has invalid or inconsistent break timing.');
+  if(!Object.hasOwn(saved,'breakRuntime'))saved.breakRuntime=emptyBreakRuntime(saved.breaks);
   if(Object.hasOwn(preferences,'voiceMode')&&!['auto','recordings','device'].includes(preferences.voiceMode))throw new Error('This backup has an invalid voice setting.');
   if(Object.hasOwn(preferences,'name') && !validName(preferences.name)) throw new Error('This backup has an invalid name. Use up to 40 characters without control characters.');
   if(Object.hasOwn(saved,'namePractice')&&!validNamePractice(saved.namePractice,preferences))throw new Error('This backup has invalid name progress.');
@@ -341,17 +596,17 @@ async function reviewBackup(file){
     if(request!==importRequest) return;
     pendingBackup=saved;
     const letters=saved.preferences.letters;
-    document.getElementById('backup-summary').textContent=`Backup version ${saved.version}: ${saved.garden.flowers} flowers in all; ${saved.garden.patchFlowers} of 5 in the current patch${saved.garden.patchFlowers===5?' (complete)':''}. Sound ${saved.preferences.sound?'on':'off'}. Letters: ${letters.set==='custom'?letters.custom:letters.set==='full'?'A–Z':'A–E'}, ${letters.case==='upper'?'uppercase':'lowercase'}. Numbers: 1–${saved.preferences.numbers.max}. Buddy: ${buddyFor(saved.buddy)?.name||'not chosen'}. Unopened visitors: ${saved.visitorRewards?.pending.length||0}. Discovered visitors: ${new Set(saved.visitorRewards?.opened.map(item=>item.visitor)||[]).size}. Unclaimed decorations: ${saved.decorationRewards?.pending.length||0}. Chosen decorations: ${saved.decorationRewards?.claimed.length||0}. Little mission: ${validMission(saved.mission)?saved.mission.progress+' of 3'+(saved.mission.complete?' (complete)':''):'none'}. Saved name: ${validName(saved.preferences.name)?saved.preferences.name.display||'none':'none'}. Practice history: ${saved.practiceHistory.activities.length} activities, ${saved.practiceHistory.discoveries} discoveries. Other saved fields, including older name fields, are kept. This replaces your current ${state.garden.flowers} flowers and all saved settings and progress; it does not merge gardens.`;
+    document.getElementById('backup-summary').textContent=`Backup version ${saved.version}: ${saved.garden.flowers} flowers in all; ${saved.garden.patchFlowers} of 5 in the current patch${saved.garden.patchFlowers===5?' (complete)':''}. Sound ${saved.preferences.sound?'on':'off'}. Letters: ${letters.set==='custom'?letters.custom:letters.set==='full'?'A–Z':'A–E'}, ${letters.case==='upper'?'uppercase':'lowercase'}. Numbers: 1–${saved.preferences.numbers.max}. Buddy: ${buddyFor(saved.buddy)?.name||'not chosen'}. Unopened visitors: ${saved.visitorRewards?.pending.length||0}. Discovered visitors: ${new Set(saved.visitorRewards?.opened.map(item=>item.visitor)||[]).size}. Unclaimed decorations: ${saved.decorationRewards?.pending.length||0}. Chosen decorations: ${saved.decorationRewards?.claimed.length||0}. Little mission: ${validMission(saved.mission)?saved.mission.progress+' of 3'+(saved.mission.complete?' (complete)':''):'none'}. Saved name: ${validName(saved.preferences.name)?saved.preferences.name.display||'none':'none'}. Practice history: ${saved.practiceHistory.activities.length} activities, ${saved.practiceHistory.discoveries} discoveries. Break rules: ${saved.breaks.rules.length} (${saved.breaks.rules.filter(rule=>rule.enabled).length} enabled). Other saved fields, including older name fields, are kept. This replaces your current ${state.garden.flowers} flowers and all saved settings and progress; it does not merge gardens.`;
     document.getElementById('backup-review').hidden=false;
     document.getElementById('cancel-import').focus();
   } catch(error){if(request===importRequest) backupStatus(`${error.message} Your current garden has not changed.`);}
 }
-function replaceFromBackup(){
+function replaceFromBackup(){if(!parentBreakAccess())return false;
   if(!pendingBackup) return;
   // Commit first: a storage failure must not replace the current in-memory garden.
   try {localStorage.setItem(SAVE_KEY,JSON.stringify(pendingBackup));}
   catch {backupStatus('The backup could not be saved in this browser. Your current garden has not changed.');return;}
-  state=pendingBackup; unsupportedSave=false; storageMessage='';
+  state=pendingBackup; unsupportedSave=false; storageMessage='';breakScheduleChanged();
   clearBackupReview(); stopAudio(); updateStorageStatus(); updateSound(); settings.close(); home();
   toast('Your garden backup is restored.');
 }
@@ -414,7 +669,7 @@ function useDeviceVoice(){
 }
 function voiceStatus(message){document.getElementById('audio-status').textContent=message;}
 function prepareVoiceSettings(){document.getElementById('voice-mode').value=state.preferences.voiceMode||'auto';voiceStatus('Try this voice or Test sound previews the selection above. Ready to grow saves it for play.');}
-function previewVoice(){
+function previewVoice(){if(!parentBreakAccess())return false;
   deviceVoiceUnavailable=false;
   const previous=state.preferences.voiceMode, sound=state.preferences.sound, wasPreviewing=previewingVoice;
   previewingVoice=true;
@@ -422,16 +677,16 @@ function previewVoice(){
   try{speak('Sound is on. Let’s play!','sound-on');if(!sound&&!quietPreview)voiceStatus('Voice preview only. Game sound is off. Tap Test sound to turn game sound on, then Ready to grow to save this voice.');}
   finally{previewingVoice=wasPreviewing;state.preferences.sound=sound;if(previous===undefined)delete state.preferences.voiceMode;else state.preferences.voiceMode=previous;}
 }
-function advanceAfterLetter(id){
+function advanceAfterLetter(id){if(childActionBlocked())return;
   cancelLetterAdvance();
   letterAdvanceTimer=setTimeout(()=>{letterAdvanceTimer=null;if(['find','match'].includes(mode)&&answered&&id===letterRoundId&&!document.hidden&&!settings.open)round();},900);
 }
-function countAudio(number){
+function countAudio(number){if(childActionBlocked())return;
   if(!state.preferences.sound || quietPreview)return;
   countAudioQueue.push(number);
   if(countAudioQueue.length===1)playCountAudio();
 }
-function playCountAudio(){
+function playCountAudio(){if(childActionBlocked())return;
   const number=countAudioQueue[0];
   if(number===undefined)return;
   speak(numberWords[number],`count-number-${number}`,()=>{countAudioQueue.shift();playCountAudio();});
@@ -448,12 +703,14 @@ function stopAudio(clearQueue=true){
   speech = null;
 }
 function audioHelp(){
+  if(mode==='break'){toast('Break time is shown on screen. Tap Hear break time to hear the alert. Check media volume and Silent Mode.');return;}
   const feedback = document.getElementById('feedback');
   if(target && !answered && feedback && !['count','quantity'].includes(mode)) feedback.textContent = mode==='number'?numberPrompt():`Find ${mode==='match'?target[0].toLowerCase():shown(target[0])}`;
   document.getElementById('audio-status').textContent = 'Check media volume and Silent Mode, then tap Test sound again.';
   toast(`Tap ${mode==='quantity'?'Hear it again':mode==='number'?'Hear the number':'Hear the letter'} to retry. Check media volume and your phone’s Silent Mode.`);
 }
 function speak(text, clip, onDone){
+  if(clip!=='break-time'&&childActionBlocked())return;
   if(!state.preferences.sound || quietPreview) return;
   stopAudio(!onDone);
   const id = playbackId;
@@ -508,7 +765,7 @@ function speak(text, clip, onDone){
   if(!clip||useDeviceVoice()){fallback();return;}
   recording();
 }
-function speakPrompt(){if(target) {if(mode==='quantity'){speak('How many apples do you see? Tap a number, or count with me.','quantity-prompt');}else if(mode==='count'){if(countedObjects.size) {stopAudio();countAudio(countedObjects.size);}else speak('Tap each apple. Count with me!','count-prompt');}else if(mode==='number') speak(`Can you find ${numberWords[target]}?`,`number-find-${target}`);else speak(prompt(),`${mode}-${target[0]}`);}}
+function speakPrompt(){if(childActionBlocked())return;if(target) {if(mode==='quantity'){speak('How many apples do you see? Tap a number, or count with me.','quantity-prompt');}else if(mode==='count'){if(countedObjects.size) {stopAudio();countAudio(countedObjects.size);}else speak('Tap each apple. Count with me!','count-prompt');}else if(mode==='number') speak(`Can you find ${numberWords[target]}?`,`number-find-${target}`);else speak(prompt(),`${mode}-${target[0]}`);}}
 function toast(text){const el=document.getElementById('toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3500);}
 function blooms(count=state.garden.patchFlowers){return Array.from({length:5},(_,i)=>`<span class="bloom ${i<Math.min(count,5)?'':'empty'}" aria-hidden="true">✿</span>`).join('');}
 function illustration(){return `<svg viewBox="0 0 530 330" role="img" aria-label="Happy letters A, B, and C growing in a sunny garden"><defs><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#cbd6b4" opacity=".4"/></pattern></defs><path d="M65 254C25 155 104 46 231 51C392 3 514 116 467 248Z" fill="#e8edd8"/><path d="M65 254C25 155 104 46 231 51C392 3 514 116 467 248Z" fill="url(#dots)"/><circle cx="424" cy="67" r="27" fill="#edc773"/><g stroke="#edc773" stroke-width="3" stroke-linecap="round"><path d="M424 27v-8M424 107v8M384 67h-8M464 67h8M395 38l-6-6M453 96l6 6M453 38l6-6"/></g><g fill="#f9f8ee"><ellipse cx="140" cy="74" rx="32" ry="13"/><circle cx="134" cy="63" r="16"/><circle cx="156" cy="67" r="11"/></g><path d="M48 268Q239 224 483 270Q379 317 130 304Z" fill="#d6e1b9"/><path d="M70 275Q244 255 464 281" stroke="#b7c990" stroke-width="2" fill="none"/><g transform="rotate(-9 145 193)"><rect x="92" y="120" width="110" height="145" rx="27" fill="#e8b872"/><rect x="92" y="113" width="110" height="144" rx="27" fill="#f4cf89"/><text x="147" y="217" text-anchor="middle" fill="#7e623e" font-family="Trebuchet MS,sans-serif" font-size="100" font-weight="bold">A</text><circle cx="139" cy="240" r="3" fill="#7e623e"/><circle cx="156" cy="240" r="3" fill="#7e623e"/><path d="M141 247q7 7 13 0" stroke="#7e623e" stroke-width="2" fill="none"/></g><g transform="rotate(7 274 166)"><rect x="218" y="92" width="108" height="156" rx="27" fill="#87a365"/><rect x="218" y="86" width="108" height="155" rx="27" fill="#adc484"/><text x="272" y="195" text-anchor="middle" fill="#43653f" font-family="Trebuchet MS,sans-serif" font-size="105" font-weight="bold">B</text><circle cx="264" cy="220" r="3" fill="#43653f"/><circle cx="281" cy="220" r="3" fill="#43653f"/><path d="M266 227q7 6 13 0" stroke="#43653f" stroke-width="2" fill="none"/></g><g transform="rotate(-5 386 208)"><rect x="337" y="142" width="103" height="128" rx="26" fill="#a59abc"/><rect x="337" y="136" width="103" height="127" rx="26" fill="#c8beda"/><text x="389" y="224" text-anchor="middle" fill="#736488" font-family="Trebuchet MS,sans-serif" font-size="91" font-weight="bold">C</text><circle cx="381" cy="246" r="3" fill="#736488"/><circle cx="397" cy="246" r="3" fill="#736488"/><path d="M383 253q6 5 12 0" stroke="#736488" stroke-width="2" fill="none"/></g><g stroke="#73925a" stroke-width="4" fill="none" stroke-linecap="round"><path d="M65 277v-37M456 287v-42M300 296v-21"/></g><g fill="#9caf78"><ellipse cx="55" cy="258" rx="12" ry="6" transform="rotate(30 55 258)"/><ellipse cx="76" cy="250" rx="12" ry="6" transform="rotate(-35 76 250)"/><ellipse cx="445" cy="266" rx="12" ry="6" transform="rotate(30 445 266)"/><ellipse cx="468" cy="257" rx="12" ry="6" transform="rotate(-30 468 257)"/></g><text x="43" y="243" font-size="40" fill="#de9d76">✿</text><text x="433" y="249" font-size="43" fill="#e9bc68">✿</text><text x="286" y="278" font-size="28" fill="#b39cbc">✿</text><path d="M348 47q10-18 20 0q-10 15-20 0" fill="#d7a58a"/><path d="M358 43v14" stroke="#8e7c5d" stroke-width="2"/><g fill="#9bb373"><circle cx="82" cy="126" r="3"/><circle cx="479" cy="195" r="3"/><circle cx="184" cy="60" r="3"/></g></svg>`;}
@@ -532,30 +789,30 @@ function buddyHome(){
   const buddy=buddyFor(state.buddy);
   return `<section class="buddy-home" aria-label="Your garden buddy"><span class="buddy-avatar" aria-hidden="true">${buddy?buddy.picture:'🌱'}</span><div><h2>${buddy?`${buddy.name}, your garden buddy`:'Meet a little garden friend'}</h2><p>${buddy?'Ready for more little discoveries together.':'Bunny, Turtle, or Dinosaur? You can choose whenever you like.'}</p></div><button class="rest-button" id="choose-buddy">${buddy?'Change buddy':'Choose a buddy'} <span aria-hidden="true">→</span></button></section>`;
 }
-function chooseBuddy(){
-  mode='buddy';target=null;stopAudio();pendingBuddy=buddyFor(state.buddy)?.id||null;
+function chooseBuddy(){if(childActionBlocked())return;
+  if(!changeLearningMode('buddy'))return;target=null;stopAudio();pendingBuddy=buddyFor(state.buddy)?.id||null;
   renderBuddyChoices();window.scrollTo(0,0);
 }
-function renderBuddyChoices(){
+function renderBuddyChoices(){if(childActionBlocked())return;
   const selected=buddyFor(pendingBuddy);
   app.innerHTML=`<div class="play-nav"><button class="back" id="buddy-back">← Learning Garden home</button></div><section class="play-area buddy-intro"><div class="eyebrow">A friend for your garden</div><h1>Who shall we grow with?</h1><p class="play-sub">Tap a friend to say hello. Then let’s play!</p></section><section class="buddy-grid" aria-label="Choose your garden buddy">${buddies.map(buddy=>`<button class="buddy-card" id="buddy-${buddy.id}" data-buddy="${buddy.id}" aria-pressed="${pendingBuddy===buddy.id}" aria-describedby="buddy-introduction"><span class="buddy-picture" aria-hidden="true">${buddy.picture}</span><span class="buddy-name">${buddy.name}</span><span class="buddy-check">${pendingBuddy===buddy.id?'✓ Selected':'♫ Say hello'}</span></button>`).join('')}</section><div class="buddy-confirm"><p id="buddy-introduction" role="status" aria-live="polite">${selected?selected.intro:'Three little friends. You can change your buddy any time.'}</p><button class="primary" id="confirm-buddy" ${selected?'':'disabled'}>${selected?`Let’s play with ${selected.name}`:'Choose a friend above'} <span aria-hidden="true">→</span></button><button class="rest-button" id="skip-buddy">${state.buddy?'Keep my buddy & play':'Skip for now & play'} <span aria-hidden="true">→</span></button><p class="small">Your flowers and discoveries always stay with you.</p></div>`;
   document.getElementById('buddy-back').onclick=home;
-  document.getElementById('skip-buddy').onclick=()=>{if(mode==='buddy')home();};
+  document.getElementById('skip-buddy').onclick=()=>{if(childActionBlocked())return;if(mode==='buddy')home();};
   document.getElementById('confirm-buddy').onclick=confirmBuddy;
   app.querySelectorAll('[data-buddy]').forEach(button=>button.onclick=()=>selectBuddy(button.dataset.buddy));
 }
-function selectBuddy(id){
+function selectBuddy(id){if(childActionBlocked())return;
   if(mode!=='buddy'||!buddyFor(id))return;
   pendingBuddy=id;renderBuddyChoices();document.getElementById(`buddy-${id}`).focus();
   speak(buddyFor(id).intro,`buddy-${id}`);
 }
-function confirmBuddy(){
+function confirmBuddy(){if(childActionBlocked())return;
   if(mode!=='buddy'||!buddyFor(pendingBuddy))return;
   state.buddy=pendingBuddy;persist();home();
   document.getElementById('letter-garden').focus();
 }
-function home(){
-  missionRunning=false;mode='home';target=null;stopAudio();
+function home(){if(childActionBlocked())return;
+  missionRunning=false;if(!changeLearningMode('home'))return;target=null;stopAudio();
   app.innerHTML=`<section class="hero"><div><div class="eyebrow">Welcome to Learning Garden</div><h1>Little discoveries.<br><em>Room to grow.</em></h1><p>Choose a garden. Listen, tap, and discover.<br>Your flowers grow with you.</p><div class="pill">✦ Made for little hands & curious minds</div></div><div class="illustration">${illustration()}</div></section>${buddyHome()}${missionHome()}<button class="visitor-surprise my-garden-door" id="my-garden"><span class="visitor-gift" aria-hidden="true">🌿 🍄 🦋</span><strong>My Garden</strong><span>Enjoy your garden, decorations & visitors →</span></button>${pendingVisitorCue()}${pendingDecorationCue()}<div class="choose-heading"><h2>Where shall we grow?</h2></div><section class="subject-grid" aria-label="Choose a garden"><button class="game-card subject-card" id="letter-garden"><div class="card-top"><span class="card-art" aria-hidden="true">A B C 🌱</span></div><h3>Letter Garden</h3><p>Find letters, match big & little,<br>and explore the alphabet.</p><span class="card-arrow" aria-hidden="true">→</span></button><button class="game-card peach subject-card" id="number-garden"><div class="card-top"><span class="card-art" aria-hidden="true">1 2 3 🌷</span></div><h3 id="number-garden-title">Number Garden</h3><p>Find numerals and count apples.<br>Little discoveries with numbers.</p><span class="card-arrow" aria-hidden="true">→</span></button></section><section class="garden-strip" aria-label="Your garden: ${state.garden.flowers} flowers"><span class="garden-icon" aria-hidden="true">🌱</span><div class="garden-copy"><h3>Your garden grows with you.</h3><p>${state.garden.patchFlowers===5?'Five flowers! Your garden is in bloom.':`${state.garden.patchFlowers} of 5 flowers in this garden.`}</p></div><div class="garden-blooms">${blooms()}<span class="garden-count">${state.garden.flowers} flowers in all</span></div>${state.garden.patchFlowers===5?'<button class="garden-reward-button" id="see-garden">See my garden →</button>':''}</section>`;
   document.getElementById('little-mission').onclick=missionMenu;
   bindVisitorCue();
@@ -566,32 +823,32 @@ function home(){
   if(state.garden.patchFlowers===5)document.getElementById('see-garden').onclick=()=>gardenComplete(false);
   window.scrollTo(0,0);
 }
-function letterGarden(){mode='letters';target=null;stopAudio();app.innerHTML=`<section class="hero"><div><div class="play-nav"><button class="back" id="subject-home">← Learning Garden home</button></div><div class="eyebrow">Letter Garden · A little adventure from A to Z</div><h1>Small letters.<br><em>Big adventures.</em></h1><p>A happy place to meet the alphabet.<br>Listen, tap, and watch your little garden grow.</p><div class="pill">✦ Made for little hands & curious minds</div></div><div class="illustration">${illustration()}</div></section><div class="choose-heading"><h2>What shall we play?</h2><p>Little ways to learn</p><button class="rest-button" id="discover-name">Discover my name →</button></div><section class="game-grid" aria-label="Choose a game"><button class="game-card" data-mode="find"><div class="card-top"><span class="card-art">A <small>⌕</small></span><span class="card-label">LISTEN & FIND</span></div><h3>Find a letter</h3><p>Listen closely. Can you spot<br>the letter you hear?</p><span class="card-arrow">↗</span></button><button class="game-card peach" data-mode="match"><div class="card-top"><span class="card-art">A<small>a</small></span><span class="card-label">LOOK & MATCH</span></div><h3>Big & little</h3><p>Big letters have little friends.<br>Let’s bring them together.</p><span class="card-arrow">↗</span></button><button class="game-card lilac" data-mode="explore"><div class="card-top"><span class="card-art">A B C</span><span class="card-label">TAP & EXPLORE</span></div><h3>Alphabet picnic</h3><p>Meet every letter and<br>a picture pal to go with it.</p><span class="card-arrow">↗</span></button></section><section class="garden-strip" aria-label="Your garden: ${state.garden.flowers} flowers"><span class="garden-icon">🌱</span><div class="garden-copy"><h3>A little learning. A little growing.</h3><p>${state.garden.patchFlowers===5?"Five flowers! Your garden is in bloom.":`${state.garden.patchFlowers} of 5 flowers in this garden. Keep growing!`}</p></div><div class="garden-blooms">${blooms()}<span class="garden-count">${state.garden.flowers} flowers in all</span></div>${state.garden.patchFlowers===5?'<button class="garden-reward-button" id="see-garden">See my garden →</button>':''}</section>`;document.getElementById('subject-home').onclick=home;document.getElementById('discover-name').onclick=()=>start('name');app.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>start(button.dataset.mode)));if(state.garden.patchFlowers===5)document.getElementById('see-garden').onclick=()=>gardenComplete(false);window.scrollTo(0,0);}
+function letterGarden(){if(childActionBlocked())return;if(!changeLearningMode('letters'))return;target=null;stopAudio();app.innerHTML=`<section class="hero"><div><div class="play-nav"><button class="back" id="subject-home">← Learning Garden home</button></div><div class="eyebrow">Letter Garden · A little adventure from A to Z</div><h1>Small letters.<br><em>Big adventures.</em></h1><p>A happy place to meet the alphabet.<br>Listen, tap, and watch your little garden grow.</p><div class="pill">✦ Made for little hands & curious minds</div></div><div class="illustration">${illustration()}</div></section><div class="choose-heading"><h2>What shall we play?</h2><p>Little ways to learn</p><button class="rest-button" id="discover-name">Discover my name →</button></div><section class="game-grid" aria-label="Choose a game"><button class="game-card" data-mode="find"><div class="card-top"><span class="card-art">A <small>⌕</small></span><span class="card-label">LISTEN & FIND</span></div><h3>Find a letter</h3><p>Listen closely. Can you spot<br>the letter you hear?</p><span class="card-arrow">↗</span></button><button class="game-card peach" data-mode="match"><div class="card-top"><span class="card-art">A<small>a</small></span><span class="card-label">LOOK & MATCH</span></div><h3>Big & little</h3><p>Big letters have little friends.<br>Let’s bring them together.</p><span class="card-arrow">↗</span></button><button class="game-card lilac" data-mode="explore"><div class="card-top"><span class="card-art">A B C</span><span class="card-label">TAP & EXPLORE</span></div><h3>Alphabet picnic</h3><p>Meet every letter and<br>a picture pal to go with it.</p><span class="card-arrow">↗</span></button></section><section class="garden-strip" aria-label="Your garden: ${state.garden.flowers} flowers"><span class="garden-icon">🌱</span><div class="garden-copy"><h3>A little learning. A little growing.</h3><p>${state.garden.patchFlowers===5?"Five flowers! Your garden is in bloom.":`${state.garden.patchFlowers} of 5 flowers in this garden. Keep growing!`}</p></div><div class="garden-blooms">${blooms()}<span class="garden-count">${state.garden.flowers} flowers in all</span></div>${state.garden.patchFlowers===5?'<button class="garden-reward-button" id="see-garden">See my garden →</button>':''}</section>`;document.getElementById('subject-home').onclick=home;document.getElementById('discover-name').onclick=()=>start('name');app.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>start(button.dataset.mode)));if(state.garden.patchFlowers===5)document.getElementById('see-garden').onclick=()=>gardenComplete(false);window.scrollTo(0,0);}
 function nav(label){return `<div class="play-nav"><button class="back" id="back">← ${mode==='numbers'?'Learning Garden home':['number','count','quantity'].includes(mode)||(mode==='reward'&&['number','count','quantity'].includes(rewardMode))?'Number Garden':'Letter Garden'}</button><span class="mode-tag">${label}</span></div>`;}
-function numberGarden(){
-  mode='numbers';target=null;stopAudio();
+function numberGarden(){if(childActionBlocked())return;
+  if(!changeLearningMode('numbers'))return;target=null;stopAudio();
   app.innerHTML=nav('Number Garden')+`<section class="play-area"><div class="eyebrow">Number Garden</div><h1>Let’s discover numbers</h1><p class="play-sub">Listen, find, and count. Your flowers grow together.</p></section><section class="game-grid" aria-label="Number games"><button class="game-card subject-card peach" id="find-number"><div class="card-top"><span class="card-art" aria-hidden="true">1 2 3</span></div><h3>Find a number</h3><p>Hear a number. Find its numeral.</p><span class="card-arrow" aria-hidden="true">→</span></button><button class="game-card subject-card" id="count-number"><div class="card-top"><span class="card-art" aria-hidden="true">🍎 🍎</span></div><h3>Count with me</h3><p>Tap each apple. Hear them counted.</p><span class="card-arrow" aria-hidden="true">→</span></button><button class="game-card subject-card lilac" id="how-many"><div class="card-top"><span class="card-art" aria-hidden="true">🍎🍎 <small>→ 2</small></span></div><h3>How many do you see?</h3><p>Count a group. Choose its number.</p><span class="card-arrow" aria-hidden="true">→</span></button></section><section class="garden-strip" aria-label="Your shared garden: ${state.garden.flowers} flowers"><span class="garden-icon" aria-hidden="true">&#127793;</span><div class="garden-copy"><h3>One garden, growing together.</h3><p>${state.garden.patchFlowers===5?'Five flowers! Your garden is in bloom.':`${state.garden.patchFlowers} of 5 flowers in this garden.`}</p></div><div class="garden-blooms">${blooms()}<span class="garden-count">${state.garden.flowers} flowers in all</span></div>${state.garden.patchFlowers===5?'<button class="garden-reward-button" id="see-garden">See my garden &rarr;</button>':''}</section>`;
   document.getElementById('back').onclick=home;
   document.getElementById('find-number').onclick=()=>start('number');
   document.getElementById('count-number').onclick=()=>start('count');
   document.getElementById('how-many').onclick=()=>start('quantity');
-  if(state.garden.patchFlowers===5)document.getElementById('see-garden').onclick=()=>{rewardMode='number';gardenComplete(false);};
+  if(state.garden.patchFlowers===5)document.getElementById('see-garden').onclick=()=>{if(childActionBlocked())return;rewardMode='number';gardenComplete(false);};
   window.scrollTo(0,0);
 }
 let countedObjects=new Set();
-function countRound(){
+function countRound(){if(childActionBlocked())return;
   stopAudio();
   if(state.garden.patchFlowers===5){gardenComplete(false);return;}
   const id=++numberRoundId;
   target=numberRound(lastTarget).target;lastTarget=target;answered=false;countedObjects=new Set();
   app.innerHTML=nav('Number Garden · Count with me')+`<section class="play-area"><div class="eyebrow">Count with me</div><h1>Tap each apple</h1><p class="play-sub">One tap for each apple. Go in any order.</p>${learningBuddy()}<button class="listen-button" id="listen"><span aria-hidden="true">♫</span> Hear it again</button><div class="count-objects" aria-label="Apples to count">${Array.from({length:target},(_,i)=>`<button class="count-object" data-object="${i}" aria-label="Apple ${i+1}, not counted" aria-pressed="false"><span aria-hidden="true">🍎</span><span class="count-badge" aria-hidden="true"></span></button>`).join('')}</div><div class="feedback" id="feedback" role="status" aria-live="polite">0 counted. Tap an apple!</div><button class="next-button" id="next" hidden>Count more apples →</button><div class="round-garden" id="round-garden" aria-label="${state.garden.flowers} flowers">${blooms()}<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small></div></section>`;
   document.getElementById('back').onclick=numberGarden;
-  document.getElementById('listen').onclick=()=>{if(mode==='count'&&id===numberRoundId)speakPrompt();};
-  document.getElementById('next').onclick=()=>{if(mode!=='count'||!answered||id!==numberRoundId)return;if(state.garden.patchFlowers===5)gardenComplete(true);else round();};
+  document.getElementById('listen').onclick=()=>{if(childActionBlocked())return;if(mode==='count'&&id===numberRoundId)speakPrompt();};
+  document.getElementById('next').onclick=()=>{if(childActionBlocked())return;if(mode!=='count'||!answered||id!==numberRoundId)return;if(state.garden.patchFlowers===5)gardenComplete(true);else round();};
   app.querySelectorAll('[data-object]').forEach(button=>button.onclick=()=>countObject(button,id));
   window.scrollTo(0,0);speakPrompt();
 }
-function countObject(button,id=numberRoundId){
+function countObject(button,id=numberRoundId){if(childActionBlocked())return;
   if(mode!=='count'||answered||id!==numberRoundId)return;
   const index=Number(button.dataset.object);
   if(!Number.isInteger(index)||index<0||index>=target||countedObjects.has(index))return;
@@ -610,23 +867,23 @@ function countObject(button,id=numberRoundId){
   document.getElementById('round-garden').innerHTML=blooms()+`<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small>`;
   document.getElementById('round-garden').setAttribute('aria-label',`${state.garden.flowers} flowers`);celebrate();
 }
-function start(nextMode,inMission=false){missionRunning=inMission;mode=nextMode;lastTarget=null;if(mode==='explore')explore();else round();}
+function start(nextMode,inMission=false){if(childActionBlocked())return;missionRunning=inMission;if(!changeLearningMode(nextMode))return;lastTarget=null;if(mode==='explore')explore();else round();}
 function prompt(){return mode==='find'?`Can you find the letter ${target[0]}?`:`This is big ${target[0]}. Can you find little ${target[0]}?`;}
-function round(){cancelLetterAdvance();if(mode==='name'){nameRound();return;}if(missionRunning&&storyFor(state.mission)&&(missionNeedsStage||state.mission.complete)){missionStage();return;}if(mode==='quantity'){quantityRound();return;}if(mode==='count'){countRound();return;}if(mode==='number'){numberGameRound();return;}if(state.garden.patchFlowers===5){gardenComplete(false);return;}const id=++letterRoundId;answered=false;const letters=pool();target=shuffle(letters.filter(x=>x[0]!==lastTarget))[0]||letters[0];lastTarget=target[0];const choices=shuffle([target,...shuffle(letters.filter(x=>x!==target)).slice(0,2)]);app.innerHTML=nav(mode==='find'?'Listen & find':'Big & little')+`<section class="play-area letter-play ${mode==='match'?'matching-play':''}"><div class="eyebrow">Let’s make a discovery</div><h1>${mode==='find'?'Which letter do you hear?':'Find my little friend'}</h1><p class="play-sub">${mode==='find'?'Tap the speaker, then tap a letter.':'Big and little letters have the same name.'}</p>${mode==='match'?`<div class="target-letter" aria-label="Capital ${target[0]}">${target[0]}</div>`:''}${learningBuddy()}<button class="listen-button" id="listen"><span>♫</span> ${mode==='find'?'Hear the letter':'Hear it again'}</button><div class="choices">${choices.map(x=>`<button class="letter-choice" data-letter="${x[0]}" aria-label="${mode==='match'?'Little':'Letter'} ${mode==='match'?x[0].toLowerCase():shown(x[0])}">${mode==='match'?x[0].toLowerCase():shown(x[0])}</button>`).join('')}</div><div class="feedback" id="feedback" role="status" aria-live="polite">${!state.preferences.sound&&mode==='find'?`Find ${shown(target[0])}`:'Take your time, little sprout.'}</div><button class="next-button" id="next" hidden>Another letter →</button><div class="round-garden" id="round-garden" aria-label="${state.garden.flowers} flowers">${blooms()}<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small></div></section>`;document.getElementById('back').onclick=letterGarden;document.getElementById('listen').onclick=()=>{if(!['find','match'].includes(mode)||id!==letterRoundId)return;speakPrompt();if(!state.preferences.sound)document.getElementById('feedback').textContent=`Find ${mode==='match'?target[0].toLowerCase():shown(target[0])}`;};document.getElementById('next').onclick=()=>{if(['find','match'].includes(mode)&&id===letterRoundId)round();};app.querySelectorAll('[data-letter]').forEach(button=>button.onclick=()=>answer(button,id));window.scrollTo(0,0);speakPrompt();}
-function answer(button,id=letterRoundId){if(!['find','match'].includes(mode)||answered||id!==letterRoundId)return;if(!alphabet.some(item=>item[0]===button.dataset.letter))return;recordPractice(mode,target[0],button.dataset.letter!==target[0]);const feedback=document.getElementById('feedback');if(button.dataset.letter!==target[0]){button.classList.remove('try-again');void button.offsetWidth;button.classList.add('try-again');reactBuddy('encouraging');feedback.textContent=`Let’s look for ${mode==='match'?target[0].toLowerCase():shown(target[0])}. Try another!`;speak(`That is ${button.dataset.letter}. Try another letter.`,`retry-${button.dataset.letter}`);return;}answered=true;reactBuddy('happy');button.classList.add('correct');app.querySelectorAll('[data-letter]').forEach(el=>el.disabled=true);earnFlower();if(state.garden.patchFlowers===5&&(!state.preferences.sound||quietPreview)){gardenComplete(true);return;}feedback.textContent=`${target[0]} is for ${target[1]}! ${target[2]}`;speak(`You found ${target[0]}! ${target[0]} is for ${target[1]}. Your garden grew a flower!`,`correct-${target[0]}`,()=>{if(!['find','match'].includes(mode)||id!==letterRoundId)return;if(state.garden.patchFlowers===5)gardenComplete(true);else advanceAfterLetter(id);});if(!state.preferences.sound||quietPreview)advanceAfterLetter(id);else letterAdvanceTimer=setTimeout(()=>{if(!['find','match'].includes(mode)||id!==letterRoundId)return;if(state.garden.patchFlowers===5)gardenComplete(false);else advanceAfterLetter(id);},15000);document.getElementById('next').hidden=false;document.getElementById('next').textContent=state.garden.patchFlowers===5?'See my garden →':'Another letter →';document.getElementById('round-garden').innerHTML=blooms()+`<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small>`;document.getElementById('round-garden').setAttribute('aria-label',`${state.garden.flowers} flowers`);celebrate();}
+function round(){if(childActionBlocked())return;cancelLetterAdvance();if(mode==='name'){nameRound();return;}if(missionRunning&&storyFor(state.mission)&&(missionNeedsStage||state.mission.complete)){missionStage();return;}if(mode==='quantity'){quantityRound();return;}if(mode==='count'){countRound();return;}if(mode==='number'){numberGameRound();return;}if(state.garden.patchFlowers===5){gardenComplete(false);return;}const id=++letterRoundId;answered=false;const letters=pool();target=shuffle(letters.filter(x=>x[0]!==lastTarget))[0]||letters[0];lastTarget=target[0];const choices=shuffle([target,...shuffle(letters.filter(x=>x!==target)).slice(0,2)]);app.innerHTML=nav(mode==='find'?'Listen & find':'Big & little')+`<section class="play-area letter-play ${mode==='match'?'matching-play':''}"><div class="eyebrow">Let’s make a discovery</div><h1>${mode==='find'?'Which letter do you hear?':'Find my little friend'}</h1><p class="play-sub">${mode==='find'?'Tap the speaker, then tap a letter.':'Big and little letters have the same name.'}</p>${mode==='match'?`<div class="target-letter" aria-label="Capital ${target[0]}">${target[0]}</div>`:''}${learningBuddy()}<button class="listen-button" id="listen"><span>♫</span> ${mode==='find'?'Hear the letter':'Hear it again'}</button><div class="choices">${choices.map(x=>`<button class="letter-choice" data-letter="${x[0]}" aria-label="${mode==='match'?'Little':'Letter'} ${mode==='match'?x[0].toLowerCase():shown(x[0])}">${mode==='match'?x[0].toLowerCase():shown(x[0])}</button>`).join('')}</div><div class="feedback" id="feedback" role="status" aria-live="polite">${!state.preferences.sound&&mode==='find'?`Find ${shown(target[0])}`:'Take your time, little sprout.'}</div><button class="next-button" id="next" hidden>Another letter →</button><div class="round-garden" id="round-garden" aria-label="${state.garden.flowers} flowers">${blooms()}<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small></div></section>`;document.getElementById('back').onclick=letterGarden;document.getElementById('listen').onclick=()=>{if(childActionBlocked())return;if(!['find','match'].includes(mode)||id!==letterRoundId)return;speakPrompt();if(!state.preferences.sound)document.getElementById('feedback').textContent=`Find ${mode==='match'?target[0].toLowerCase():shown(target[0])}`;};document.getElementById('next').onclick=()=>{if(childActionBlocked())return;if(['find','match'].includes(mode)&&id===letterRoundId)round();};app.querySelectorAll('[data-letter]').forEach(button=>button.onclick=()=>answer(button,id));window.scrollTo(0,0);speakPrompt();}
+function answer(button,id=letterRoundId){if(childActionBlocked())return;if(!['find','match'].includes(mode)||answered||id!==letterRoundId)return;if(!alphabet.some(item=>item[0]===button.dataset.letter))return;recordPractice(mode,target[0],button.dataset.letter!==target[0]);const feedback=document.getElementById('feedback');if(button.dataset.letter!==target[0]){button.classList.remove('try-again');void button.offsetWidth;button.classList.add('try-again');reactBuddy('encouraging');feedback.textContent=`Let’s look for ${mode==='match'?target[0].toLowerCase():shown(target[0])}. Try another!`;speak(`That is ${button.dataset.letter}. Try another letter.`,`retry-${button.dataset.letter}`);return;}answered=true;reactBuddy('happy');button.classList.add('correct');app.querySelectorAll('[data-letter]').forEach(el=>el.disabled=true);earnFlower();if(state.garden.patchFlowers===5&&(!state.preferences.sound||quietPreview)){gardenComplete(true);return;}feedback.textContent=`${target[0]} is for ${target[1]}! ${target[2]}`;speak(`You found ${target[0]}! ${target[0]} is for ${target[1]}. Your garden grew a flower!`,`correct-${target[0]}`,()=>{if(!['find','match'].includes(mode)||id!==letterRoundId)return;if(state.garden.patchFlowers===5)gardenComplete(true);else advanceAfterLetter(id);});if(!state.preferences.sound||quietPreview)advanceAfterLetter(id);else letterAdvanceTimer=setTimeout(()=>{if(!['find','match'].includes(mode)||id!==letterRoundId)return;if(state.garden.patchFlowers===5)gardenComplete(false);else advanceAfterLetter(id);},15000);document.getElementById('next').hidden=false;document.getElementById('next').textContent=state.garden.patchFlowers===5?'See my garden →':'Another letter →';document.getElementById('round-garden').innerHTML=blooms()+`<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small>`;document.getElementById('round-garden').setAttribute('aria-label',`${state.garden.flowers} flowers`);celebrate();}
 function numberPrompt(){return `Find ${numberWords[target]} (${target}).`;}
-function numberGameRound(){
+function numberGameRound(){if(childActionBlocked())return;
   if(state.garden.patchFlowers===5){gardenComplete(false);return;}
   const nextRound=numberRound(lastTarget), id=++numberRoundId;
   target=nextRound.target;lastTarget=target;answered=false;
   app.innerHTML=nav('Number Garden · Find a number')+`<section class="play-area"><div class="eyebrow">Let’s make a discovery</div><h1>Which number do you hear?</h1><p class="play-sub">Tap the speaker, then tap a number.</p>${learningBuddy()}<button class="listen-button" id="listen"><span aria-hidden="true">♫</span> Hear the number</button><div class="choices">${nextRound.choices.map(number=>`<button class="letter-choice" data-number="${number}" aria-label="Number ${number}">${number}</button>`).join('')}</div><div class="feedback" id="feedback" role="status" aria-live="polite">${state.preferences.sound?'Take your time, little sprout.':numberPrompt()}</div><button class="next-button" id="next" hidden>Another number →</button><div class="round-garden" id="round-garden" aria-label="${state.garden.flowers} flowers">${blooms()}<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small></div></section>`;
   document.getElementById('back').onclick=numberGarden;
-  document.getElementById('listen').onclick=()=>{if(mode!=='number'||id!==numberRoundId)return;speakPrompt();if(!state.preferences.sound&&!answered)document.getElementById('feedback').textContent=numberPrompt();};
-  document.getElementById('next').onclick=()=>{if(mode==='number'&&answered&&id===numberRoundId)round();};
+  document.getElementById('listen').onclick=()=>{if(childActionBlocked())return;if(mode!=='number'||id!==numberRoundId)return;speakPrompt();if(!state.preferences.sound&&!answered)document.getElementById('feedback').textContent=numberPrompt();};
+  document.getElementById('next').onclick=()=>{if(childActionBlocked())return;if(mode==='number'&&answered&&id===numberRoundId)round();};
   app.querySelectorAll('[data-number]').forEach(button=>button.onclick=()=>answerNumber(button,id));
   window.scrollTo(0,0);speakPrompt();
 }
-function answerNumber(button,id=numberRoundId){
+function answerNumber(button,id=numberRoundId){if(childActionBlocked())return;
   if(mode!=='number'||answered||id!==numberRoundId)return;
   const choice=Number(button.dataset.number);
   if(!numberPool().includes(choice))return;
@@ -647,16 +904,16 @@ function answerNumber(button,id=numberRoundId){
   document.getElementById('round-garden').innerHTML=blooms()+`<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small>`;
   document.getElementById('round-garden').setAttribute('aria-label',`${state.garden.flowers} flowers`);celebrate();
 }
-function quantityRound(){
+function quantityRound(){if(childActionBlocked())return;
   stopAudio();
   if(state.garden.patchFlowers===5){gardenComplete(false);return;}
   const nextRound=numberRound(lastTarget), id=++numberRoundId;
   target=nextRound.target;lastTarget=target;answered=false;countedObjects=new Set();
   app.innerHTML=nav('Number Garden · How many?')+`<section class="play-area quantity-area"><div class="eyebrow">Look & count</div><h1>How many do you see?</h1><p class="play-sub">Count the apples. Tap the number that matches.</p>${learningBuddy()}<button class="listen-button" id="listen"><span aria-hidden="true">♫</span> Hear it again</button><div class="count-objects" aria-label="One group of apples to count">${Array.from({length:target},(_,i)=>`<button class="count-object" data-object="${i}" aria-label="Apple ${i+1}, tap to count" aria-pressed="false"><span aria-hidden="true">🍎</span><span class="count-badge" aria-hidden="true"></span></button>`).join('')}</div><button class="rest-button" id="count-help"><span aria-hidden="true">👆 🍎</span> Count with me</button><div class="choices">${nextRound.choices.map(number=>`<button class="letter-choice" data-number="${number}" aria-label="Number ${number}">${number}</button>`).join('')}</div><div class="feedback" id="feedback" role="status" aria-live="polite">Count the apples, then choose a number. Tap an apple for help.</div><button class="next-button" id="next" hidden>Another group →</button><div class="round-garden" id="round-garden" aria-label="${state.garden.flowers} flowers">${blooms()}<small>${state.garden.patchFlowers} of 5 · ${state.garden.flowers} in all</small></div></section>`;
   document.getElementById('back').onclick=numberGarden;
-  document.getElementById('listen').onclick=()=>{if(mode==='quantity'&&id===numberRoundId)speakPrompt();};
+  document.getElementById('listen').onclick=()=>{if(childActionBlocked())return;if(mode==='quantity'&&id===numberRoundId)speakPrompt();};
   document.getElementById('count-help').onclick=()=>quantityHelp(id);
-  document.getElementById('next').onclick=()=>{if(mode==='quantity'&&answered&&id===numberRoundId)round();};
+  document.getElementById('next').onclick=()=>{if(childActionBlocked())return;if(mode==='quantity'&&answered&&id===numberRoundId)round();};
   app.querySelectorAll('[data-object]').forEach(button=>button.onclick=()=>quantityObject(button,id));
   app.querySelectorAll('[data-number]').forEach(button=>button.onclick=()=>answerQuantity(button,id));
   window.scrollTo(0,0);speakPrompt();
@@ -681,7 +938,7 @@ function quantityObject(button,id=numberRoundId){
   document.getElementById('feedback').textContent=count===target?`${target} apples counted. Choose the matching number.`:`${numberWords[count]} (${count}) counted. Keep counting!`;
   countAudio(count);
 }
-function answerQuantity(button,id=numberRoundId){
+function answerQuantity(button,id=numberRoundId){if(childActionBlocked())return;
   if(mode!=='quantity'||answered||id!==numberRoundId)return;
   const choice=Number(button.dataset.number);if(!numberPool().includes(choice))return;
   recordPractice(mode,target,choice!==target);
@@ -703,7 +960,7 @@ function rewardsAvailable(){
   return !Object.hasOwn(state,'visitorRewards') || (validVisitorRewards(state.visitorRewards) &&
     (state.visitorRewards.patchEarned === (state.garden.patchFlowers===5)));
 }
-function earnFlower(){
+function earnFlower(){if(childActionBlocked())return;
   if(validPracticeHistory(state.practiceHistory))state.practiceHistory.discoveries=Math.min(999999,state.practiceHistory.discoveries+1);
   const canEarn=rewardsAvailable(), canDecorate=decorationRewardsAvailable();
   state.garden.flowers++;state.garden.patchFlowers++;
@@ -739,8 +996,8 @@ function pendingDecorationCue(){
 }
 // Browsing the garden reads saved collections without awarding or claiming anything.
 let myGardenViewId=0;
-function myGarden(){
-  mode='my-garden';target=null;answered=true;stopAudio();
+function myGarden(){if(childActionBlocked())return;
+  if(!changeLearningMode('my-garden'))return;target=null;answered=true;stopAudio();
   const view=++myGardenViewId;
   const ready=decorationRewardsAvailable()&&validGardenPlacements(state);
   const spots=ready?(state.gardenPlacements?.spots||Array(6).fill(null)):Array(6).fill(null);
@@ -748,12 +1005,12 @@ function myGarden(){
   const friends=rewardsAvailable()?new Set(state.visitorRewards?.opened.map(item=>item.visitor)||[]).size:0;
   app.innerHTML=`<div class="play-nav"><button class="back" id="my-garden-home">← Learning Garden home</button></div><section class="play-area garden-hub"><div class="eyebrow">Your own little place</div><h1>My Garden</h1><p class="play-sub">${owned||friends?'Welcome back! Your little garden is waiting.':'Welcome to your little garden! There is room for flowers, decorations and new friends.'}</p><div class="garden-blooms hub-blooms" aria-label="${state.garden.patchFlowers} of 5 flowers in this patch">${blooms()}<span class="garden-count">${state.garden.flowers} flowers in all</span></div><div class="garden-scene garden-preview" aria-label="Your saved garden: six spots">${spots.map((key,index)=>{const item=decorationFor(key);return `<div class="garden-spot" role="img" aria-label="Spot ${index+1}: ${item?item.name:'room to grow'}"><span aria-hidden="true">${item?.picture||'🌱'}</span><small>${item?item.name:'Room to grow'}</small></div>`;}).join('')}</div>${!ready?'<p>Your saved decorations could not be read. Ask a grown-up for help; your saved garden has been kept.</p>':''}<div class="hub-collections"><button class="rest-button" id="decorate-garden"><span aria-hidden="true">🍄 🌻</span><strong>Decorate my garden</strong><span>${owned} decorations · Tap pictures to arrange</span></button><button class="rest-button" id="visitor-collection"><span aria-hidden="true">🦋 🐞</span><strong>Meet my visitors</strong><span>${friends} friends discovered · Say hello</span></button></div>${pendingVisitorCue()}${pendingDecorationCue()}<h2>Shall we grow some more?</h2><div class="hub-subjects"><button class="next-button" id="hub-letters">A B C · Letter Garden →</button><button class="next-button" id="hub-numbers">1 2 3 · Number Garden →</button></div></section>`;
   const current=()=>mode==='my-garden'&&view===myGardenViewId;
-  for(const [id,action] of [['my-garden-home',home],['decorate-garden',decorateGarden],['visitor-collection',visitorCollection],['hub-letters',letterGarden],['hub-numbers',numberGarden]])document.getElementById(id).onclick=()=>{if(current())action();};
+  for(const [id,action] of [['my-garden-home',home],['decorate-garden',decorateGarden],['visitor-collection',visitorCollection],['hub-letters',letterGarden],['hub-numbers',numberGarden]])document.getElementById(id).onclick=()=>{if(childActionBlocked())return;if(current())action();};
   bindVisitorCue();window.scrollTo(0,0);
 }
 let gardenViewId=0;
-function decorateGarden(selected=null,message=''){
-  mode='decorate';target=null;answered=true;stopAudio();
+function decorateGarden(selected=null,message=''){if(childActionBlocked())return;
+  if(!changeLearningMode('decorate'))return;target=null;answered=true;stopAudio();
   const view=++gardenViewId;
   const ready=decorationRewardsAvailable()&&validGardenPlacements(state);
   const owned=ready?decorations.filter(item=>state.decorationRewards?.claimed.some(receipt=>receipt.decoration===item.id)):[];
@@ -762,8 +1019,8 @@ function decorateGarden(selected=null,message=''){
   const current=()=>mode==='decorate'&&view===gardenViewId;
   app.innerHTML=`<div class="play-nav"><button class="back" id="decorate-home">← My Garden</button></div><section class="play-area"><div class="eyebrow">Your own little place</div><h1>Decorate my garden</h1><p class="play-sub">Tap a picture below, then tap a garden spot. Tap a placed picture to move it.</p><p class="reward-message" id="placement-message" role="status" aria-live="polite"></p><div class="garden-scene ${selected?'placing':''}" aria-label="Six garden spots">${spots.map((key,index)=>{const item=decorationFor(key);return `<button class="garden-spot ${selected&&key===selected?'selected':''}" id="garden-spot-${index}" ${!ready?'disabled':''} aria-pressed="${Boolean(selected&&key===selected)}" aria-label="Spot ${index+1}: ${item?item.name:'empty'}${selected?', place '+decorationFor(selected).name+' here':''}"><span aria-hidden="true">${item?.picture||'🌱'}</span><small>Spot ${index+1}${item?' · '+item.name:''}</small></button>`;}).join('')}</div><h2>Your decorations</h2><div class="garden-inventory" aria-label="Owned decorations">${owned.map(item=>`<button class="garden-item ${selected===item.id?'selected':''}" id="garden-item-${item.id}" aria-pressed="${selected===item.id}"><span aria-hidden="true">${item.picture}</span><strong>${item.name}</strong><small>${spots.includes(item.id)?'In your garden':'Ready to place'}</small></button>`).join('')}</div>${!owned.length&&ready?'<p>Welcome to your little garden! Grow five flowers to choose a decoration. Your six spots will be waiting.</p>':''}<div class="reward-actions"><button class="rest-button" id="garden-return" ${!selected||!spots.includes(selected)?'disabled':''}>↩ Return selected picture to collection</button><button class="rest-button" id="garden-cancel" ${!selected?'disabled':''}>Cancel selection</button></div></section>`;
   document.getElementById('placement-message').textContent=!ready?'Your saved decorations could not be read. Ask a grown-up for help; your saved garden has been kept.':message||(selected?`${decorationFor(selected).name} selected. Tap a glowing spot. An occupied spot swaps pictures, or returns its picture to the collection.`:'Choose a picture, then a spot.');
-  document.getElementById('decorate-home').onclick=()=>{if(current())myGarden();};
-  owned.forEach(item=>{document.getElementById(`garden-item-${item.id}`).onclick=()=>{if(!current())return;decorateGarden(item.id);speak(item.name,`decoration-${item.id}`);};});
+  document.getElementById('decorate-home').onclick=()=>{if(childActionBlocked())return;if(current())myGarden();};
+  owned.forEach(item=>{document.getElementById(`garden-item-${item.id}`).onclick=()=>{if(childActionBlocked())return;if(!current())return;decorateGarden(item.id);speak(item.name,`decoration-${item.id}`);};});
   function saveSpots(next,note){
     const previous=state.gardenPlacements;
     state.gardenPlacements={...previous,version:1,spots:next};
@@ -773,7 +1030,7 @@ function decorateGarden(selected=null,message=''){
     }
     decorateGarden(null,note);
   }
-  spots.forEach((key,index)=>{document.getElementById(`garden-spot-${index}`).onclick=()=>{
+  spots.forEach((key,index)=>{document.getElementById(`garden-spot-${index}`).onclick=()=>{if(childActionBlocked())return;
     if(!current()||!ready)return;
     if(!selected){if(key)decorateGarden(key);return;}
     const next=[...spots],from=next.indexOf(selected);
@@ -782,12 +1039,12 @@ function decorateGarden(selected=null,message=''){
     next[index]=selected;
     saveSpots(next,`${decorationFor(selected).name} is in your garden. Choose another picture whenever you like.`);
   };});
-  document.getElementById('garden-return').onclick=()=>{if(!current()||!selected||!spots.includes(selected))return;saveSpots(spots.map(key=>key===selected?null:key),`${decorationFor(selected).name} is safe in your collection.`);};
-  document.getElementById('garden-cancel').onclick=()=>{if(current())decorateGarden();};
+  document.getElementById('garden-return').onclick=()=>{if(childActionBlocked())return;if(!current()||!selected||!spots.includes(selected))return;saveSpots(spots.map(key=>key===selected?null:key),`${decorationFor(selected).name} is safe in your collection.`);};
+  document.getElementById('garden-cancel').onclick=()=>{if(childActionBlocked())return;if(current())decorateGarden();};
   window.scrollTo(0,0);
 }
 let decorationViewId=0;
-function chooseDecoration(){
+function chooseDecoration(){if(childActionBlocked())return;
   if(!decorationRewardsAvailable())return;
   const rewards=state.decorationRewards, receipt=rewards?.pending[0];
   if(!receipt)return;
@@ -799,13 +1056,13 @@ function chooseDecoration(){
     receipt.options=fresh.length===1?[fresh[0].id,pool.find(item=>item.id!==fresh[0].id).id]:pool.slice(0,2).map(item=>item.id);
   }
   if(!persist()){toast('Your decoration is waiting. Ask a grown-up to help save, then tap again.');return;}
-  mode='decoration';target=null;answered=true;stopAudio();const view=++decorationViewId;
+  if(!changeLearningMode('decoration'))return;target=null;answered=true;stopAudio();const view=++decorationViewId;
   const owned=new Set(rewards.claimed.map(item=>item.decoration));
   app.innerHTML=`<section class="play-area"><div class="eyebrow">A gift for your garden</div><h1>Which one shall we keep?</h1><p class="play-sub">Listen to each name, then choose one. You can come back later.</p><div class="decoration-grid">${receipt.options.map(key=>{const item=decorationFor(key);return `<div class="visitor-card"><span class="collection-picture" aria-hidden="true">${item.picture}</span><strong>${item.name}</strong><button class="rest-button" id="hear-${key}" aria-label="Hear ${item.name}">♫ Hear name</button><button class="next-button" id="keep-${key}">Keep ${item.name}</button>${owned.has(key)?'<span>Another lovely one to keep</span>':''}</div>`;}).join('')}</div><button class="rest-button" id="decoration-later">Choose later · Home</button></section>`;
   document.getElementById('decoration-later').onclick=home;
   for(const key of receipt.options){
-    document.getElementById(`hear-${key}`).onclick=()=>{if(mode==='decoration'&&view===decorationViewId)speak(decorationFor(key).name,`decoration-${key}`);};
-    document.getElementById(`keep-${key}`).onclick=()=>{
+    document.getElementById(`hear-${key}`).onclick=()=>{if(childActionBlocked())return;if(mode==='decoration'&&view===decorationViewId)speak(decorationFor(key).name,`decoration-${key}`);};
+    document.getElementById(`keep-${key}`).onclick=()=>{if(childActionBlocked())return;
       if(mode!=='decoration'||view!==decorationViewId||!decorationRewardsAvailable()||!state.decorationRewards.pending.some(item=>item.id===receipt.id))return;
       const previous=JSON.stringify(state.decorationRewards);
       state.decorationRewards.pending=state.decorationRewards.pending.filter(item=>item.id!==receipt.id);
@@ -826,18 +1083,18 @@ function pendingVisitorCue(){
 let visitorViewId=0;
 function bindVisitorCue(){
   const decorationView=++decorationViewId;
-  if(decorationRewardsAvailable()&&state.decorationRewards?.pending.length)document.getElementById('choose-decoration').onclick=()=>{
+  if(decorationRewardsAvailable()&&state.decorationRewards?.pending.length)document.getElementById('choose-decoration').onclick=()=>{if(childActionBlocked())return;
     if(decorationView===decorationViewId&&['home','my-garden','reward','visitor','collection'].includes(mode))chooseDecoration();
   };
   const id=++visitorViewId, receipt=rewardsAvailable()?state.visitorRewards?.pending[0]:undefined;
-  if(receipt)document.getElementById('reveal-visitor').onclick=()=>{
+  if(receipt)document.getElementById('reveal-visitor').onclick=()=>{if(childActionBlocked())return;
     if(id!==visitorViewId || !['home','my-garden','reward','visitor','collection'].includes(mode))return;
     revealVisitor(receipt);
   };
 }
 // Collection browsing reads the same receipts as reveals; it never grants rewards.
-function visitorCollection(){
-  mode='collection';target=null;answered=true;stopAudio();
+function visitorCollection(){if(childActionBlocked())return;
+  if(!changeLearningMode('collection'))return;target=null;answered=true;stopAudio();
   const seen=new Set(rewardsAvailable()?state.visitorRewards?.opened.map(item=>item.visitor)||[]:[]);
   app.innerHTML=`<div class="play-nav"><button class="back" id="collection-home">← My Garden</button></div><section class="play-area"><div class="eyebrow">Our garden friends</div><h1>Meet my visitors</h1><p class="play-sub">Tap a friend to say hello. More friends may visit as your garden grows.</p>${pendingVisitorCue()}${pendingDecorationCue()}<div class="visitor-grid" aria-label="Garden visitors">${visitors.map(visitor=>seen.has(visitor.id)?`<button class="visitor-card" id="collection-${visitor.id}" aria-label="Say hello to ${visitor.name}"><span class="collection-picture" aria-hidden="true">${visitor.picture}</span><strong>${visitor.name}</strong><span>♫ Say hello</span></button>`:`<div class="visitor-card unknown" role="img" aria-label="A friend yet to visit"><svg class="collection-picture visitor-silhouette" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path d="M25 72Q8 48 30 40Q20 15 42 28Q53 8 65 30Q92 23 82 49Q99 68 74 77Q50 95 25 72Z"/><circle cx="43" cy="51" r="3"/><circle cx="60" cy="51" r="3"/><path class="smile" d="M43 62Q52 71 61 61"/></svg><strong>A friend yet to visit</strong></div>`).join('')}</div><p id="visitor-greeting" class="reward-message" role="status" aria-live="polite">Your friends are happy to see you.</p><button class="rest-button" id="collection-rest">Rest in the garden 🌿</button></section>`;
   bindVisitorCue();
@@ -847,7 +1104,7 @@ function visitorCollection(){
   for(const visitor of visitors){
     if(!seen.has(visitor.id))continue;
     const button=document.getElementById(`collection-${visitor.id}`);
-    button.onclick=()=>{
+    button.onclick=()=>{if(childActionBlocked())return;
       if(mode!=='collection'||view!==visitorViewId)return;
       button.classList.remove('visitor-wave');void button.offsetWidth;button.classList.add('visitor-wave');
       document.getElementById('visitor-greeting').textContent=`Hello, ${visitor.name}! So happy to see you!`;
@@ -856,7 +1113,7 @@ function visitorCollection(){
   }
   window.scrollTo(0,0);
 }
-function revealVisitor(receipt){
+function revealVisitor(receipt){if(childActionBlocked())return;
   if(!rewardsAvailable() || !state.visitorRewards?.pending.includes(receipt))return;
   // Ensure the earned receipt is durable before choosing or presenting its visitor.
   if(!persist()){toast('Your visitor is waiting. Ask a grown-up to help save, then tap again.');return;}
@@ -869,7 +1126,7 @@ function revealVisitor(receipt){
   rewards.opened.push({id:receipt,visitor:visitor.id});
   // Failed claim writes leave the unopened receipt available, with no visible reveal.
   if(!persist()){state.visitorRewards=JSON.parse(previous);toast('Your visitor is still waiting. Ask a grown-up to help save, then tap again.');return;}
-  mode='visitor';target=null;answered=true;stopAudio();
+  if(!changeLearningMode('visitor'))return;target=null;answered=true;stopAudio();
   app.innerHTML=`<section class="play-area celebration"><div class="eyebrow">A friend has come to visit!</div><h1>Hello, ${visitor.name}!</h1><div class="visitor-picture" role="img" aria-label="${visitor.name}">${visitor.picture}</div><p class="reward-message" role="status">${visitor.name} is visiting your garden.</p>${learningBuddy('happy')}${pendingVisitorCue()}${pendingDecorationCue()}<div class="reward-actions"><button class="next-button" id="visitor-collection">Meet my visitors 🦋</button><button class="rest-button" id="visitor-home">Rest in the garden</button>${state.garden.patchFlowers===5?'<button class="next-button" id="visitor-garden">See my garden 🌷</button>':''}</div></section>`;
   document.getElementById('visitor-collection').onclick=visitorCollection;
   document.getElementById('visitor-home').onclick=home;
@@ -877,29 +1134,75 @@ function revealVisitor(receipt){
   bindVisitorCue();window.scrollTo(0,0);celebrate();
   speak(`Hello, ${visitor.name}!`, `visitor-${visitor.id}`);
 }
-function gardenComplete(announce){
+function gardenComplete(announce){if(childActionBlocked())return;
   if(mode==='name'||mode==='find'||mode==='match'||mode==='number'||mode==='count'||mode==='quantity') rewardMode=mode;
-  mode='reward'; target=null; answered=true;
+  if(!changeLearningMode('reward'))return; target=null; answered=true;
   app.innerHTML=nav('Five little discoveries')+`<section class="play-area celebration"><div class="eyebrow">Look what you grew!</div><h1>Your garden is in bloom!</h1><p class="play-sub">Five flowers. Five wonderful discoveries.</p>${learningBuddy('happy')}<div class="flower-patch" role="img" aria-label="Five colorful flowers in your completed garden">${Array.from({length:5},(_,i)=>`<div class="garden-flower" style="--i:${i}"><span class="flower-head" aria-hidden="true">✿</span><span class="flower-stem" aria-hidden="true"></span></div>`).join('')}<span class="patch-ground" aria-hidden="true"></span></div><p class="reward-message" role="status">Hooray, little gardener! You did it.</p><p class="reward-total">${state.garden.flowers} flowers grown in all</p>${pendingVisitorCue()}${pendingDecorationCue()}<div class="reward-actions"><button class="next-button" id="plant-next">Plant another garden <span aria-hidden="true">🌱</span></button><button class="rest-button" id="rest">Rest in the garden</button></div></section>`;
   document.getElementById('back').onclick=['number','count','quantity'].includes(rewardMode)?numberGarden:letterGarden;
   bindVisitorCue();
   document.getElementById('rest').onclick=home;
   const viewId=visitorViewId;
-  document.getElementById('plant-next').onclick=()=>{if(viewId!==visitorViewId||mode!=='reward'||state.garden.patchFlowers!==5)return;if(decorationRewardsAvailable()&&state.decorationRewards)state.decorationRewards.patchEarned=false;if(rewardsAvailable()&&state.visitorRewards)state.visitorRewards.patchEarned=false;state.garden.patchFlowers=0;persist();mode=rewardMode;round();};
+  document.getElementById('plant-next').onclick=()=>{if(childActionBlocked())return;if(viewId!==visitorViewId||mode!=='reward'||state.garden.patchFlowers!==5)return;if(decorationRewardsAvailable()&&state.decorationRewards)state.decorationRewards.patchEarned=false;if(rewardsAvailable()&&state.visitorRewards)state.visitorRewards.patchEarned=false;state.garden.patchFlowers=0;persist();if(!changeLearningMode(rewardMode))return;round();};
   window.scrollTo(0,0);
   if(announce){celebrate();speak('Hooray! Five flowers! You grew a beautiful garden. Well done, little gardener!','garden-complete');}
 }
-function celebrate(){const layer=document.createElement('div');layer.className='sparkles';layer.setAttribute('aria-hidden','true');layer.innerHTML=Array.from({length:16},()=>`<span class="spark" style="left:${Math.random()*100}%;animation-delay:${Math.random()*.5}s;color:${['#a5b974','#e6b45c','#c0a4cb','#e49c76'][Math.floor(Math.random()*4)]}">${Math.random()>.5?'✿':'★'}</span>`).join('');document.body.append(layer);setTimeout(()=>layer.remove(),2400);}
-function explore(){const id=++letterRoundId;app.innerHTML=nav('Tap & explore')+`<section class="play-area"><div class="eyebrow">Bring your curiosity</div><h1>A picnic with the alphabet</h1><p class="play-sub">Tap a letter. Meet a picture pal.</p>${learningBuddy()}<div class="explore-banner" id="explore-banner" role="status" aria-live="polite"><span class="big-picture">🧺</span><strong>Who will you meet first?</strong></div><div class="explore-grid">${alphabet.map(x=>`<button class="explore-letter" data-letter="${x[0]}" aria-label="${x[0]} is for ${x[1]}"><span class="letters">${x[0]}${x[0].toLowerCase()}</span><span class="picture" aria-hidden="true">${x[2]}</span><span class="word">${x[1]}</span></button>`).join('')}</div></section>`;document.getElementById('back').onclick=letterGarden;app.querySelectorAll('[data-letter]').forEach(button=>button.onclick=()=>{if(mode!=='explore'||id!==letterRoundId)return;reactBuddy('happy');const item=alphabet.find(x=>x[0]===button.dataset.letter);if(!item)return;recordPractice('explore',item[0]);app.querySelector('.active')?.classList.remove('active');button.classList.add('active');document.getElementById('explore-banner').innerHTML=`<span class="big-picture">${item[2]}</span><strong>${item[0]} is for ${item[1]}!</strong>`;speak(`${item[0]} is for ${item[1]}.`,`explore-${item[0]}`);});window.scrollTo(0,0);speak('Welcome to the alphabet picnic. Tap a letter!','welcome');}
+function celebrate(){if(childActionBlocked())return;const layer=document.createElement('div');layer.className='sparkles';layer.setAttribute('aria-hidden','true');layer.innerHTML=Array.from({length:16},()=>`<span class="spark" style="left:${Math.random()*100}%;animation-delay:${Math.random()*.5}s;color:${['#a5b974','#e6b45c','#c0a4cb','#e49c76'][Math.floor(Math.random()*4)]}">${Math.random()>.5?'✿':'★'}</span>`).join('');document.body.append(layer);setTimeout(()=>layer.remove(),2400);}
+function explore(){if(childActionBlocked())return;const id=++letterRoundId;app.innerHTML=nav('Tap & explore')+`<section class="play-area"><div class="eyebrow">Bring your curiosity</div><h1>A picnic with the alphabet</h1><p class="play-sub">Tap a letter. Meet a picture pal.</p>${learningBuddy()}<div class="explore-banner" id="explore-banner" role="status" aria-live="polite"><span class="big-picture">🧺</span><strong>Who will you meet first?</strong></div><div class="explore-grid">${alphabet.map(x=>`<button class="explore-letter" data-letter="${x[0]}" aria-label="${x[0]} is for ${x[1]}"><span class="letters">${x[0]}${x[0].toLowerCase()}</span><span class="picture" aria-hidden="true">${x[2]}</span><span class="word">${x[1]}</span></button>`).join('')}</div></section>`;document.getElementById('back').onclick=letterGarden;app.querySelectorAll('[data-letter]').forEach(button=>button.onclick=()=>{if(childActionBlocked())return;if(mode!=='explore'||id!==letterRoundId)return;reactBuddy('happy');const item=alphabet.find(x=>x[0]===button.dataset.letter);if(!item)return;recordPractice('explore',item[0]);app.querySelector('.active')?.classList.remove('active');button.classList.add('active');document.getElementById('explore-banner').innerHTML=`<span class="big-picture">${item[2]}</span><strong>${item[0]} is for ${item[1]}!</strong>`;speak(`${item[0]} is for ${item[1]}.`,`explore-${item[0]}`);});window.scrollTo(0,0);speak('Welcome to the alphabet picnic. Tap a letter!','welcome');}
+// One synchronous operation has one wall-clock checkpoint. Nested helpers cannot
+// start a lock halfway through an accepted answer and then leave its caller running.
+function guardedChildOperation(operation){return function(...args){
+  if(breakActionDepth)return operation.apply(this,args);
+  breakActionNow=Date.now();
+  if(evaluateBreakSchedule(breakActionNow).length||breakLockShown)return;
+  ++breakActionDepth;
+  try{return operation.apply(this,args);}finally{--breakActionDepth;breakActionNow=null;}
+};}
+missionStage=guardedChildOperation(missionStage);
+startStoryMission=guardedChildOperation(startStoryMission);
+missionMenu=guardedChildOperation(missionMenu);
+startMission=guardedChildOperation(startMission);
+recordPractice=guardedChildOperation(recordPractice);
+nameRound=guardedChildOperation(nameRound);
+nameAnswer=guardedChildOperation(nameAnswer);
+advanceAfterLetter=guardedChildOperation(advanceAfterLetter);
+countAudio=guardedChildOperation(countAudio);
+playCountAudio=guardedChildOperation(playCountAudio);
+speakPrompt=guardedChildOperation(speakPrompt);
+selectBuddy=guardedChildOperation(selectBuddy);
+confirmBuddy=guardedChildOperation(confirmBuddy);
+chooseBuddy=guardedChildOperation(chooseBuddy);
+renderBuddyChoices=guardedChildOperation(renderBuddyChoices);
+home=guardedChildOperation(home);
+letterGarden=guardedChildOperation(letterGarden);
+numberGarden=guardedChildOperation(numberGarden);
+countRound=guardedChildOperation(countRound);
+countObject=guardedChildOperation(countObject);
+start=guardedChildOperation(start);
+round=guardedChildOperation(round);
+answer=guardedChildOperation(answer);
+numberGameRound=guardedChildOperation(numberGameRound);
+answerNumber=guardedChildOperation(answerNumber);
+quantityRound=guardedChildOperation(quantityRound);
+answerQuantity=guardedChildOperation(answerQuantity);
+earnFlower=guardedChildOperation(earnFlower);
+myGarden=guardedChildOperation(myGarden);
+decorateGarden=guardedChildOperation(decorateGarden);
+chooseDecoration=guardedChildOperation(chooseDecoration);
+visitorCollection=guardedChildOperation(visitorCollection);
+revealVisitor=guardedChildOperation(revealVisitor);
+gardenComplete=guardedChildOperation(gardenComplete);
+celebrate=guardedChildOperation(celebrate);
+explore=guardedChildOperation(explore);
 function updateSound(){const button=document.getElementById('sound');button.innerHTML=`<span aria-hidden="true">${state.preferences.sound?'♫':'♩'}</span><span class="sound-label">Sound ${state.preferences.sound?'on':'off'}</span>`;button.setAttribute('aria-label',state.preferences.sound?'Turn sound off':'Turn sound on');button.title=state.preferences.sound?'Sound on':'Sound off';button.setAttribute('aria-pressed',String(state.preferences.sound));}
 document.getElementById('sound').onclick=()=>{state.preferences.sound=!state.preferences.sound;persist();updateSound();if(state.preferences.sound){if(target)speakPrompt();else speak('Sound is on. Let’s play!','sound-on');}else{stopAudio();if(mode==='number'&&target&&!answered)document.getElementById('feedback').textContent=numberPrompt();else if(mode==='find'&&target&&!answered)document.getElementById('feedback').textContent=`Find ${shown(target[0])}`;}toast(state.preferences.sound?'Sound on':'Sound off');};
 document.getElementById('home').onclick=home;
-document.getElementById('grownups').onclick=()=>{stopAudio();document.getElementById('number-range').value=String(state.preferences.numbers.max);document.getElementById('letter-set').value=state.preferences.letters.set;document.getElementById('case').value=state.preferences.letters.case;document.getElementById('custom-letters').value=state.preferences.letters.custom;document.getElementById('custom-wrap').hidden=state.preferences.letters.set!=='custom';prepareVoiceSettings();prepareNameSettings();prepareBackupSettings();preparePracticeSettings();settings.showModal();};
+function openGrownupSettings(){if(!parentBreakAccess())return;evaluateBreakSchedule();breakSettingsOpen=true;evaluateBreakSchedule();stopAudio();document.getElementById('number-range').value=String(state.preferences.numbers.max);document.getElementById('letter-set').value=state.preferences.letters.set;document.getElementById('case').value=state.preferences.letters.case;document.getElementById('custom-letters').value=state.preferences.letters.custom;document.getElementById('custom-wrap').hidden=state.preferences.letters.set!=='custom';prepareVoiceSettings();prepareNameSettings();prepareBackupSettings();preparePracticeSettings();prepareBreakSettings();settings.showModal();}
+document.getElementById('grownups').onclick=openGrownupSettings;
 document.getElementById('clear-history').onclick=()=>{document.getElementById('confirm-clear-history').hidden=false;};
 document.getElementById('cancel-clear-history').onclick=()=>{document.getElementById('confirm-clear-history').hidden=true;};
 document.getElementById('confirm-clear-history-button').onclick=clearPracticeHistory;
 document.getElementById('close-settings').onclick=()=>settings.close();
-settings.onclose=clearBackupReview;
+settings.onclose=()=>{breakParentVerified=false;evaluateBreakSchedule();breakSettingsOpen=false;clearBackupReview();evaluateBreakSchedule();};
 document.getElementById('download-backup').onclick=downloadBackup;
 document.getElementById('share-backup').onclick=shareBackup;
 document.getElementById('import-backup').onchange=event=>reviewBackup(event.target.files[0]);
@@ -907,13 +1210,20 @@ document.getElementById('cancel-import').onclick=()=>{clearBackupReview();backup
 document.getElementById('confirm-import').onclick=replaceFromBackup;
 document.getElementById('letter-set').onchange=event=>document.getElementById('custom-wrap').hidden=event.target.value!=='custom';
 document.getElementById('child-name').oninput=updateNamePreview;
-document.getElementById('save-settings').onclick=()=>{if(!updateNamePreview()){document.getElementById('child-name').focus();return;}const custom=[...new Set(document.getElementById('custom-letters').value.toUpperCase().replace(/[^A-Z]/g,''))].join('');if(document.getElementById('letter-set').value==='custom'&&custom.length<3){toast('Choose at least three different letters.');document.getElementById('custom-letters').focus();return;}const display=document.getElementById('child-name').value;if(display!==state.preferences.name?.display||(Object.hasOwn(state,'namePractice')&&!validNamePractice(state.namePractice)))delete state.namePractice;if(display)state.preferences.name={...record(state.preferences.name),display};else delete state.preferences.name;if(['recordings','device'].includes(document.getElementById('voice-mode').value))state.preferences.voiceMode=document.getElementById('voice-mode').value;else delete state.preferences.voiceMode;state.preferences.letters.set=document.getElementById('letter-set').value;state.preferences.letters.case=document.getElementById('case').value;state.preferences.letters.custom=custom;state.preferences.numbers.max=numberMax(Number(document.getElementById('number-range').value));persist();settings.close();if(mode==='name'||mode==='find'||mode==='match'||mode==='number'||mode==='count'||mode==='quantity')round();toast('Ready for a little learning!');};
-document.getElementById('abandon-mission').onclick=()=>{const previous=state.mission;delete state.mission;if(!persist()){if(previous!==undefined)state.mission=previous;return;}missionRunning=false;settings.close();home();toast('Mission put away. Your flowers are still here.');};
-document.getElementById('reset').onclick=()=>{state.garden.flowers=0;if(decorationRewardsAvailable()&&state.decorationRewards)state.decorationRewards.patchEarned=false;if(rewardsAvailable()&&state.visitorRewards)state.visitorRewards.patchEarned=false;state.garden.patchFlowers=0;persist();settings.close();home();toast('A fresh garden, ready to grow.');};
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAudio();});
-document.getElementById('test-sound').onclick=()=>{state.preferences.sound=true;persist();updateSound();previewVoice();};
-persist();updateSound();home();
+document.getElementById('save-settings').onclick=()=>{if(!parentBreakAccess())return;if(!updateNamePreview()){document.getElementById('child-name').focus();return;}const custom=[...new Set(document.getElementById('custom-letters').value.toUpperCase().replace(/[^A-Z]/g,''))].join('');if(document.getElementById('letter-set').value==='custom'&&custom.length<3){toast('Choose at least three different letters.');document.getElementById('custom-letters').focus();return;}const display=document.getElementById('child-name').value;if(display!==state.preferences.name?.display||(Object.hasOwn(state,'namePractice')&&!validNamePractice(state.namePractice)))delete state.namePractice;if(display)state.preferences.name={...record(state.preferences.name),display};else delete state.preferences.name;if(['recordings','device'].includes(document.getElementById('voice-mode').value))state.preferences.voiceMode=document.getElementById('voice-mode').value;else delete state.preferences.voiceMode;state.preferences.letters.set=document.getElementById('letter-set').value;state.preferences.letters.case=document.getElementById('case').value;state.preferences.letters.custom=custom;state.preferences.numbers.max=numberMax(Number(document.getElementById('number-range').value));persist();settings.close();if(mode==='name'||mode==='find'||mode==='match'||mode==='number'||mode==='count'||mode==='quantity')round();toast('Ready for a little learning!');};
+document.getElementById('abandon-mission').onclick=()=>{if(!parentBreakAccess())return;const previous=state.mission;delete state.mission;if(!persist()){if(previous!==undefined)state.mission=previous;return;}missionRunning=false;settings.close();home();toast('Mission put away. Your flowers are still here.');};
+document.getElementById('reset').onclick=()=>{if(!parentBreakAccess())return;state.garden.flowers=0;if(decorationRewardsAvailable()&&state.decorationRewards)state.decorationRewards.patchEarned=false;if(rewardsAvailable()&&state.visitorRewards)state.visitorRewards.patchEarned=false;state.garden.patchFlowers=0;persist();settings.close();home();toast('A fresh garden, ready to grow.');};
+document.addEventListener('visibilitychange',()=>{evaluateBreakSchedule();if(document.hidden)stopAudio();});
+// pagehide checkpoints partial play, pageshow/foreground starts a new visible segment.
+if(window.addEventListener){window.addEventListener('pagehide',()=>{evaluateBreakSchedule();breakWasPlaying=false;});window.addEventListener('pageshow',()=>{breakLastTick=null;evaluateBreakSchedule();});window.addEventListener('focus',()=>evaluateBreakSchedule());}
+document.getElementById('test-sound').onclick=()=>{if(!parentBreakAccess())return;state.preferences.sound=true;persist();updateSound();previewVoice();};
+installBreakLock();breakScheduleChanged();persist();updateSound();home();startBreakScheduler();
 
 // Both buttons use the draft voice; Test sound also enables game sound.
 document.getElementById('preview-voice').onclick=previewVoice;
 document.getElementById('voice-mode').onchange=()=>{stopAudio();voiceStatus('Selection changed. Tap Try this voice or Test sound to preview; Ready to grow saves it.');};
+
+document.getElementById('add-break').onclick=()=>editBreakRule();
+document.getElementById('cancel-break').onclick=()=>{document.getElementById('break-editor').hidden=true;editingBreakId=null;};
+document.getElementById('save-break').onclick=()=>{if(updateBreakPreview())saveBreakRule(breakDraft());};
+for(const id of ['name','emoji','enabled','kind','duration','interval','time',...Array.from({length:7},(_,day)=>'day-'+day)])document.getElementById('break-'+id).oninput=updateBreakPreview;

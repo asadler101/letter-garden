@@ -1,11 +1,12 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const port = Number(process.env.PORT) || 4173;
+const port = process.env.PORT===undefined?4173:Number(process.env.PORT);
+const audioPaths = new Set(Object.keys(require('./audio/manifest.json')).filter(id=>/^[a-zA-Z0-9-]+$/.test(id)).map(id=>'/audio/'+id+'.wav'));
 const files = {'/':'index.html','/index.html':'index.html','/style.css':'style.css','/app.js':'app.js'};
-http.createServer((req,res)=>{
+const server=http.createServer((req,res)=>{
   const pathname = new URL(req.url, 'http://localhost').pathname;
-  const file = files[pathname] || (/^\/audio\/[a-z]+(?:-[A-Z]|-on)?\.wav$/.test(pathname) ? pathname.slice(1) : null);
+  const file = files[pathname] || (audioPaths.has(pathname) ? pathname.slice(1) : null);
   if (!file) {res.writeHead(404);res.end('Not found');return;}
   const type = file.endsWith('.wav')?'audio/wav':file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':'text/html';
   fs.readFile(path.join(__dirname,file),(error,data)=>{
@@ -21,4 +22,4 @@ http.createServer((req,res)=>{
     }
     res.writeHead(200,{...headers,'Content-Length':data.length});res.end(data);
   });
-}).listen(port,'127.0.0.1',()=>console.log(`Letter Garden is ready: http://localhost:${port}`));
+}).listen(port,'127.0.0.1',()=>console.log(`Letter Garden is ready: http://localhost:${server.address().port}`));
