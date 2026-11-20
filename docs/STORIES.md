@@ -20,7 +20,7 @@ The repository and public URL retain **Letter Garden**. LG-01 introduces **Learn
 - **Implemented and published:** LG-01–LG-08 and LG-10–LG-21. The expansion shipped in [PR #2](https://github.com/asadler101/letter-garden/pull/2); narration, landscape letter flow, and automatic letter progression were updated in [PR #3](https://github.com/asadler101/letter-garden/pull/3), [PR #4](https://github.com/asadler101/letter-garden/pull/4), [PR #5](https://github.com/asadler101/letter-garden/pull/5), and [PR #6](https://github.com/asadler101/letter-garden/pull/6). The dated “not committed/published” implementation notes below describe the earlier work session and are superseded by these releases.
 - **Still open before full sign-off:** LG-03 backup/share/import on actual devices; LG-09 numbers/device verification; LG-15 saved decoration layouts across phone/tablet/laptop; LG-22 family testing. Other implemented cards retain In progress until their shared device, layout, accessibility, and listening checks are recorded. See [device checks](DEVICE-CHECKS.md) and [family checks](FAMILY-CHECKS.md).
 - **Audio follow-up:** latest iPhone recording restoration and letter/picture-word feedback shipped in PR #6; successful actual-device confirmation is still needed. Replacing the original synthetic recordings with a more natural narrator has not been delivered.
-- **Break features in progress:** LG-31 configuration is implemented locally; LG-32 schedule timing is implemented locally; LG-33 locking is implemented locally; LG-34 verification remains open.
+- **Break features:** LG-31 configuration, LG-32 scheduling, and LG-33 app locking are implemented in [PR #9](https://github.com/asadler101/letter-garden/pull/9). LG-34 physical-device/family verification remains open; see [break checks](BREAK-CHECKS.md).
 - **New, not implemented:** LG-35–LG-41, optional seasonal/holiday themes, themed collections, and little missions.
 - **Future proposals, not scheduled:** LG-23–LG-26 shapes, colors, patterns, and early letter sounds; LG-27–LG-30 paid-offering research, iOS preparation/unlock, and optional paid web/cross-device saves.
 
@@ -444,11 +444,11 @@ All 97 silent Node tests and app/server syntax/diff checks pass. Five new cases 
 
 ## Phase 5 — Family break times
 
-These cards add optional breaks configured by grown-ups, not timed learning challenges. Breaks block play inside Learning Garden; they do not lock the device or other apps. Schedule and duration are separate settings. Proposed scheduling covers both fixed local clock times (for example lunch at noon) and intervals of active play (for example a stretch after 20 minutes); defaults and exact labels can be refined before implementation.
+These cards add optional breaks configured by grown-ups, not timed learning challenges. Breaks block play inside Learning Garden; they do not lock the device or other apps. Schedule and duration are separate settings. Scheduling supports both fixed local clock times (for example lunch at noon) and intervals of active play (for example a stretch after 20 minutes). Implementation and release are tracked in [PR #9](https://github.com/asadler101/letter-garden/pull/9); physical-device/family sign-off remains LG-34.
 
 ### LG-31 — Configure named break times
 
-**Status:** Implemented locally; verification pending LG-34 · **Dependencies:** LG-02
+**Status:** In progress (implemented; verification pending LG-34) · **Dependencies:** LG-02
 
 **Story:** As a grown-up, I want to create breaks with a name and a picture so our family can plan potty, stretch, lunch, or other time away from the game.
 
@@ -467,7 +467,7 @@ These cards add optional breaks configured by grown-ups, not timed learning chal
 
 ### LG-32 — Schedule when a break begins and ends
 
-**Status:** Implemented locally; verification pending LG-34 · **Dependencies:** LG-31
+**Status:** In progress (implemented; verification pending LG-34) · **Dependencies:** LG-31
 
 **Story:** As a grown-up, I want to configure when a break happens and how long it lasts so breaks fit our family’s routine.
 
@@ -487,7 +487,7 @@ These cards add optional breaks configured by grown-ups, not timed learning chal
 
 ### LG-33 — Alert the child and pause play for the whole break
 
-**Status:** Implemented locally; verification pending LG-34 · **Dependencies:** LG-32
+**Status:** In progress (implemented; verification pending LG-34) · **Dependencies:** LG-32
 
 **Story:** As a family, we want a clear “break time” alert and no app play during its window so the child can take the planned break.
 
