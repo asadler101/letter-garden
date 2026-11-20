@@ -1,6 +1,6 @@
 # Learning Garden — roadmap and story cards
 
-Updated: November 13, 2026
+Updated: November 19, 2026
 
 ## How to use this backlog
 
@@ -15,6 +15,16 @@ Move one card to In progress, build its smallest complete experience, verify the
 
 The repository and public URL retain **Letter Garden**. LG-01 introduces **Learning Garden** product branding. Repository and URL renaming are outside that card.
 
+## Current backlog snapshot — November 19, 2026
+
+- **Implemented and published:** LG-01–LG-08 and LG-10–LG-21. The expansion shipped in [PR #2](https://github.com/asadler101/letter-garden/pull/2); narration, landscape letter flow, and automatic letter progression were updated in [PR #3](https://github.com/asadler101/letter-garden/pull/3), [PR #4](https://github.com/asadler101/letter-garden/pull/4), [PR #5](https://github.com/asadler101/letter-garden/pull/5), and [PR #6](https://github.com/asadler101/letter-garden/pull/6). The dated “not committed/published” implementation notes below describe the earlier work session and are superseded by these releases.
+- **Still open before full sign-off:** LG-03 backup/share/import on actual devices; LG-09 numbers/device verification; LG-15 saved decoration layouts across phone/tablet/laptop; LG-22 family testing. Other implemented cards retain In progress until their shared device, layout, accessibility, and listening checks are recorded. See [device checks](DEVICE-CHECKS.md) and [family checks](FAMILY-CHECKS.md).
+- **Audio follow-up:** latest iPhone recording restoration and letter/picture-word feedback shipped in PR #6; successful actual-device confirmation is still needed. Replacing the original synthetic recordings with a more natural narrator has not been delivered.
+- **New, not implemented:** LG-31–LG-34, grown-up-configured break times.
+- **Future proposals, not scheduled:** LG-23–LG-26 shapes, colors, patterns, and early letter sounds; LG-27–LG-30 paid-offering research, iOS preparation/unlock, and optional paid web/cross-device saves.
+
+A published feature is not automatically a passed device/family test. The open checkboxes below remain the acceptance record.
+
 ## Product direction
 
 A calm learning game for ages roughly 3–5, built for touch and spoken guidance. Children learn through discoveries, gentle hints, and creative choices. Parents control practice settings. Monetization is future state.
@@ -24,7 +34,7 @@ A calm learning game for ages roughly 3–5, built for touch and spoken guidance
 - Five successful learning rounds grow five flowers and complete a garden.
 - One round earns at most one flower, including a round with several counting taps. Incorrect attempts never remove progress.
 - Free exploration remains available and does not award flowers merely for repeated taps.
-- No timers, streak pressure, competitive leaderboards, purchasable reward currency, or punishment for stopping.
+- No timed learning challenges, streak pressure, competitive leaderboards, purchasable reward currency, or punishment for stopping. Optional grown-up-configured break schedules (LG-31–LG-34) are permitted and never remove earned progress.
 - No child account is needed for the planned web releases. Progress stays in the browser unless a parent explicitly exports it.
 
 ## Already delivered — preserve these behaviors
@@ -49,6 +59,7 @@ The cards below add to these capabilities rather than rebuilding them.
 | 2 — A friend and surprises | LG-10–LG-13 | Choose a buddy, get encouragement, reveal and collect visitors |
 | 3 — Make it mine | LG-14–LG-20 | Decorate a garden, take little missions, learn letters in a name |
 | 4 — Family readiness | LG-21–LG-22 | Simple parent progress view and a real-family quality pass |
+| 5 — Family break times | LG-31–LG-34 | Grown-ups schedule named picture-led breaks; play pauses throughout each break window |
 | Future learning proposals | LG-23–LG-26 | Shapes, colors, patterns, early sounds; refine before scheduling |
 | Future commercial proposals | LG-27–LG-30 | Validate pricing, prepare iOS, purchase restoration, optional paid web |
 
@@ -428,6 +439,80 @@ All 97 silent Node tests and app/server syntax/diff checks pass. Five new cases 
 - [ ] Record issues, fix blockers, and review whether the learning scope is understandable before adding commerce.
 
 **Verification preparation (November 13, 2026):** [Family check record](FAMILY-CHECKS.md) provides anonymous consent/feedback rows, child picture-flow observations, exact device/version fields, offline-file/mute/reduced-motion checks and every reward/mission interruption checkpoint. All family and actual-device results remain NOT RUN; willing families and physical-device evidence are unavailable. Existing silent regression coverage was audited; it cannot replace these observations. Corrected stale grown-up number help that described playable counting activities as coming soon. LG-22 remains In progress with every acceptance criterion open; not committed or published.
+
+## Phase 5 — Family break times
+
+These cards add optional breaks configured by grown-ups, not timed learning challenges. Breaks block play inside Learning Garden; they do not lock the device or other apps. Schedule and duration are separate settings. Proposed scheduling covers both fixed local clock times (for example lunch at noon) and intervals of active play (for example a stretch after 20 minutes); defaults and exact labels can be refined before implementation.
+
+### LG-31 — Configure named break times
+
+**Status:** Backlog · **Dependencies:** LG-02
+
+**Story:** As a grown-up, I want to create breaks with a name and a picture so our family can plan potty, stretch, lunch, or other time away from the game.
+
+**Acceptance criteria:**
+- [ ] Grown-up Settings can add, edit, enable/disable, and delete multiple break rules; breaks are optional and disabled until a grown-up configures them.
+- [ ] Each rule has a required custom display name with a reasonable length limit and safe text rendering.
+- [ ] Offer a curated emoji picker, including examples such as 🚽 potty, 🤸 stretch, 🍽️ lunch, 💧 water, and 🛋️ rest. A grown-up can choose the emoji independently of the name.
+- [ ] Each rule includes a configurable break duration and a schedule (LG-32); validate missing, zero/negative, or unsupported time values before saving.
+- [ ] Show a readable summary before saving, such as “🚽 Potty break — after 30 minutes of play, for 5 minutes.”
+- [ ] Persist rules in the browser save and compatible backups; editing breaks preserves all learning preferences, progress, missions, and collectibles.
+- [ ] Explain whether breaks are enabled and that these settings apply to this saved garden/browser.
+
+**Out of scope:** Child accounts, syncing schedules to other devices, and operating-system parental controls.
+
+### LG-32 — Schedule when a break begins and ends
+
+**Status:** Backlog · **Dependencies:** LG-31
+
+**Story:** As a grown-up, I want to configure when a break happens and how long it lasts so breaks fit our family’s routine.
+
+**Acceptance criteria:**
+- [ ] Support a fixed device-local start time with selectable days (for example lunch at 12:00 for 30 minutes), and a recurring active-play interval (for example a stretch after every 20 minutes of play for 2 minutes).
+- [ ] Active-play intervals accumulate only while learning activities are visible and usable, including exploration; time in settings, collections, a break, or the background does not count as active learning play.
+- [ ] Remember accumulated active-play time across navigation/reload; a completed interval break resets only its own interval. Editing a rule explains any reset before it happens.
+- [ ] Calculate fixed-clock break windows from the saved schedule and device-local time; reopening during a scheduled window enters the break immediately. An elapsed window does not start a retroactive break.
+- [ ] A break already triggered by an active-play interval keeps its saved end time across reload/backgrounding; time away counts toward the break duration.
+- [ ] Handle windows crossing midnight and overlapping rules deterministically: play stays locked until every active window ends, with no brief unlocked gap or duplicate reset.
+- [ ] Re-evaluate schedules on opening, returning to the foreground, and time/day changes. Define and document behavior for local timezone and daylight-saving changes; do not claim tamper-proof clock enforcement.
+- [ ] Automated tests cover time boundaries, exact end times, overlap, midnight, reload, backgrounding, and independently configured intervals.
+
+**Out of scope:** Push notifications while the website is closed, calendar integration, and server time/account services.
+
+### LG-33 — Alert the child and pause play for the whole break
+
+**Status:** Backlog · **Dependencies:** LG-32
+
+**Story:** As a family, we want a clear “break time” alert and no app play during its window so the child can take the planned break.
+
+**Acceptance criteria:**
+- [ ] At break start, show a full-app, picture-led break screen with the configured emoji/name and a clear “It’s break time” message. Indicate when play becomes available again.
+- [ ] Give a gentle spoken alert when sound is enabled, using dependable generic narration for custom names; do not upload names for speech. Muted play still gives a clear visual alert, and reduced motion is respected.
+- [ ] Stop learning narration and pending automatic advancement; block activities, exploration, missions, rewards/reveals, decoration, and collections for the full active break window.
+- [ ] Enforce the lock before accepting learning/reward actions, not only with a dismissible overlay. Home/back navigation, reload, and stale answer/reward handlers cannot bypass it or earn progress during the break.
+- [ ] Preserve every earned flower and reward, plus mission/name progress, if a break interrupts an activity or reward screen. Unfinished rounds may restart safely after the break without credit or lost earned progress.
+- [ ] Child controls cannot dismiss the lock early. A clearly separated grown-up verification step permits schedule management or an explicit end/skip for the current occurrence, without disabling future breaks accidentally.
+- [ ] Keep the grown-up access and help reachable during a break. Disabling/deleting/editing a rule while it is active clearly explains its effect; skipping one overlapping break does not unlock other active breaks.
+- [ ] When the last active break ends, offer a large “Back to the garden” action; do not resume narration or answer submission unexpectedly.
+
+**Out of scope:** Locking the phone/tablet, punitive feedback, and removing learning rewards for taking a break.
+
+### LG-34 — Verify break times across devices and saved progress
+
+**Status:** Backlog · **Dependencies:** LG-31–LG-33
+
+**Story:** As a family, we want breaks to be dependable on our devices without losing the garden or unexpectedly allowing play.
+
+**Acceptance criteria:**
+- [ ] Test actual iPhone, iPad, and laptop behavior for the alert, full-window lock, grown-up access, and returning to play; record device/browser versions and distinguish real devices from simulation.
+- [ ] Verify mute, speech failure, portrait/landscape, reduced motion, keyboard/focus, and a long custom break name/emoji.
+- [ ] Test scheduled and interval breaks when the app is opened/reloaded/backgrounded around the start/end boundaries, including midnight and overlap.
+- [ ] Interrupt correct-answer feedback, automatic next-letter advancement, a fifth-flower celebration, visitor/decorations claims, a mission step, and name practice; nothing earned is lost or duplicated.
+- [ ] Verify backup export/import with break rules and an active break. Missing old break fields mean no configured breaks; invalid schedules reject import without replacing the garden.
+- [ ] Verify unavailable/failed storage produces clear grown-up guidance and a working in-memory break; do not claim persistence across reload if saving fails.
+- [ ] Observe whether a willing family understands the name/emoji alert and can take and finish a break without treating it as punishment; record blockers without unnecessary child information.
+
+**Release gate:** Break times are ready for family use when blocking issues are fixed and this card’s results are recorded.
 
 ## Future learning proposals — refine before scheduling
 
