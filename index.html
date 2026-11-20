@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f4e9">
   <title>Learning Garden • Little discoveries. Room to grow.</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="topbar">
@@ -35,6 +35,23 @@
     <button class="primary" id="save-settings">Ready to grow <span>→</span></button>
     <label for="voice-mode">Narration voice</label><select id="voice-mode"><option value="auto">Automatic · prefer a local device voice</option><option value="device">Device voice · use this iPad or computer</option><option value="recordings">Original recordings</option></select><p class="small">On iPhone and iPad, games use the original recordings for reliable playback; device voices can still be previewed here. Device voices vary by device and installed voices. Automatic uses a local English voice when suitable, otherwise the original recordings. Names you enter are never spoken. Try this voice previews the selection without changing game sound. Test sound turns game sound on. Press Ready to grow to save the selected voice for play.</p><button class="audio-test" id="preview-voice">Try this voice</button>
     <button class="audio-test" id="test-sound">♫ Test sound</button><p class="small" id="audio-status" role="status">Tap to hear a short greeting.</p><p class="small">On iPhone, turn up media volume and turn off Silent Mode if needed. Tap Test sound, Hear the letter, or Hear the number to start playback. Choose a narration voice above. Original recordings are included; device voices depend on the voices installed on this device.</p>
+    <section aria-labelledby="break-heading">
+      <h3 id="break-heading">Optional family breaks</h3>
+      <p class="small">Break rules apply to this saved garden/browser. New rules start disabled. Active breaks pause every play area. During a break, grown-up verification is required to manage settings or end just the current occurrence. Editing, enabling, disabling or deleting a rule resets only its accumulated play time and ends its current break. Other rules keep their timing.</p>
+      <p class="small" id="break-status" role="status"></p><div id="break-current"></div><div id="break-list"></div>
+      <button class="audio-test" id="add-break" type="button">Add a break rule</button>
+      <div id="break-editor" hidden>
+        <label for="break-name">Break name (up to 40 characters)</label><input id="break-name" type="text" aria-describedby="break-preview">
+        <label for="break-emoji">Break picture</label><select id="break-emoji"><option value="🚽">🚽 Potty</option><option value="🤸">🤸 Stretch</option><option value="🍽️">🍽️ Lunch</option><option value="💧">💧 Water</option><option value="🛋️">🛋️ Rest</option><option value="🌳">🌳 Outside</option><option value="🛏️">🛏️ Sleep</option><option value="🧼">🧼 Wash</option></select>
+        <label><input type="checkbox" id="break-enabled"> Enable this rule</label>
+        <label for="break-duration">Break duration in minutes (1–240)</label><input id="break-duration" type="number" min="1" max="240" step="1">
+        <label for="break-kind">Schedule</label><select id="break-kind"><option value="interval">Recurring active-play interval</option><option value="clock">Fixed device-local time and days</option></select>
+        <div id="break-interval-fields"><label for="break-interval">Minutes of active play between breaks (1–240)</label><input id="break-interval" type="number" min="1" max="240" step="1"></div>
+        <div id="break-clock-fields"><label for="break-time">Device-local start time</label><input id="break-time" type="time"><fieldset><legend>Days the break starts</legend><label><input type="checkbox" id="break-day-0"> Sun</label><label><input type="checkbox" id="break-day-1"> Mon</label><label><input type="checkbox" id="break-day-2"> Tue</label><label><input type="checkbox" id="break-day-3"> Wed</label><label><input type="checkbox" id="break-day-4"> Thu</label><label><input type="checkbox" id="break-day-5"> Fri</label><label><input type="checkbox" id="break-day-6"> Sat</label></fieldset></div>
+        <p class="small" id="break-preview" role="status"></p><p class="small">Review this summary, then save this rule separately from learning settings. Up to 20 rules can be saved.</p>
+        <button class="audio-test" id="cancel-break" type="button">Cancel rule changes</button><button class="primary" id="save-break" type="button">Save break rule</button>
+      </div>
+    </section>
     <section aria-labelledby="practice-heading">
       <h3 id="practice-heading">See what we have explored</h3>
       <p class="small" id="practice-summary" role="status"></p>
@@ -64,6 +81,6 @@
     <button class="text-button" id="reset">Start a fresh garden</button>
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=14"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>

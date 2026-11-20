@@ -6,14 +6,14 @@ const path=require('node:path');
 const root=path.join(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'app.js'),'utf8');
 function setup({silent=false, muted=false, playError=null, savedState={}, rawSave, readError=false, writeError=false, browser={}}={}){
-  const elements=new Map(), calls=[], spoken=[], writes=[], scrolls=[], timers=new Map();let timerId=0;
-  const element=()=>({append(){},innerHTML:'',textContent:'',classList:{add(){},remove(){}},setAttribute(){},querySelectorAll(){return []},querySelector(){return null},focus(){},remove(){}});
-  const document={getElementById(id){if(!elements.has(id)) elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},createElement:element,body:{append(){}},addEventListener(){}};
+  const elements=new Map(), calls=[], spoken=[], writes=[], scrolls=[], timers=new Map(),listeners=new Map();let timerId=0;
+  const element=()=>({open:false,showModal(){this.open=true},close(){this.open=false;this.onclose?.()},append(){},innerHTML:'',textContent:'',classList:{add(){},remove(){}},setAttribute(){},querySelectorAll(){return []},querySelector(){return null},focus(){},remove(){}});
+  const document={hidden:false,getElementById(id){if(!elements.has(id)) elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},createElement:element,body:{append(){}},addEventListener(name,fn){listeners.set(name,fn)}};
   class Audio {pause(){calls.push('pause')} play(){calls.push(this.src);return playError?Promise.reject(playError):Promise.resolve()}}
-  const context=vm.createContext({document,Audio,URLSearchParams,File:require('node:buffer').File,URL:{createObjectURL(){return 'blob:backup'},revokeObjectURL(){}},navigator:{},...browser,location:{search:silent?'?silent=1':''},localStorage:{getItem(){if(readError)throw new Error('blocked');return rawSave !== undefined ? rawSave : JSON.stringify({sound:!muted,...savedState})},setItem(key,value){if(writeError)throw new Error('quota');writes.push({key,value})}},window:{scrollTo(...position){scrolls.push(position)},speechSynthesis:{cancel(){},resume(){},getVoices(){return []},speak(utterance){spoken.push(utterance)}}},SpeechSynthesisUtterance:class{constructor(text){this.text=text}},setTimeout(fn,delay){const id=++timerId;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},console});
+  const context=vm.createContext({document,Audio,URLSearchParams,File:require('node:buffer').File,URL:{createObjectURL(){return 'blob:backup'},revokeObjectURL(){}},navigator:{},...browser,location:{search:silent?'?silent=1':''},localStorage:{getItem(){if(readError)throw new Error('blocked');return rawSave !== undefined ? rawSave : JSON.stringify({sound:!muted,...savedState})},setItem(key,value){if(writeError)throw new Error('quota');writes.push({key,value})}},window:{addEventListener(name,fn){listeners.set(name,fn)},scrollTo(...position){scrolls.push(position)},speechSynthesis:{cancel(){},resume(){},getVoices(){return []},speak(utterance){spoken.push(utterance)}}},SpeechSynthesisUtterance:class{constructor(text){this.text=text}},setTimeout(fn,delay){const id=++timerId;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);},console});
   context.window.SpeechSynthesisUtterance=context.SpeechSynthesisUtterance;
   vm.runInContext(source,context);
-  return {run:code=>vm.runInContext(code,context),calls,spoken,elements,writes,scrolls,timers,fireTimers:delay=>{for(const [id,timer] of [...timers])if(timer.delay===delay&&timers.delete(id))timer.fn();}};
+  return {run:code=>vm.runInContext(code,context),calls,spoken,elements,writes,scrolls,timers,dispatch:name=>listeners.get(name)?.(),fireTimers:delay=>{for(const [id,timer] of [...timers])if(timer.delay===delay&&timers.delete(id))timer.fn();}};
 }
 const plays=env=>env.calls.filter(x=>x.startsWith('audio/'));
 test('another letter starts exactly one recording, synchronously from its handler',()=>{
@@ -35,9 +35,9 @@ test('blocked autoplay gives a visible hint without queuing more audio',async()=
  assert.match(env.elements.get('feedback').textContent,/^Find [A-Z]$/);
  assert.match(env.elements.get('toast').textContent,/Tap Hear the letter/);assert.equal(env.spoken.length,0);
 });
-test('all 203 bundled recordings are valid non-silent PCM WAVs',()=>{
+test('all 204 bundled recordings are valid non-silent PCM WAVs',()=>{
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'audio/manifest.json'),'utf8'));
- assert.equal(Object.keys(manifest).length,203);
+ assert.equal(Object.keys(manifest).length,204);
  for(const name of Object.keys(manifest)){
   const data=fs.readFileSync(path.join(root,'audio',name+'.wav'));
   assert.equal(data.toString('ascii',0,4),'RIFF');assert.equal(data.toString('ascii',8,12),'WAVE');
@@ -127,7 +127,7 @@ test('legacy preferences and completed patch migrate into a versioned save',()=>
 test('versioned saves preserve independent preferences and future fields across writes and reset',()=>{
  const saved={version:1,garden:{flowers:7,patchFlowers:2,visitors:['bee']},preferences:{sound:false,letters:{set:'full',custom:'ABC',case:'lower',hint:true},numbers:{max:5}},missions:{active:'hello'},decorations:['pot'],name:'Sam'};
  const env=setup({rawSave:JSON.stringify(saved)});
- assert.deepEqual(JSON.parse(env.writes.at(-1).value),{...saved,practiceHistory:emptyHistory()});
+ assert.deepEqual(JSON.parse(env.writes.at(-1).value),{...saved,practiceHistory:emptyHistory(),breaks:{version:1,rules:[]},breakRuntime:{version:1,rules:[]}});
  env.elements.get('sound').onclick();
  // The dialog methods are browser APIs; stub close before exercising reset.
  env.elements.get('settings').close=()=>{};env.elements.get('reset').onclick();
@@ -159,7 +159,7 @@ test('unsupported save versions are never overwritten',()=>{
 });
 
 const emptyHistory=()=>({version:1,activities:[],letters:[],numbers:[],discoveries:0});
-const backup = () => ({practiceHistory:emptyHistory(),decorationRewards:{nextId:2,patchEarned:true,pending:[{id:1}],claimed:[]},visitorRewards:{nextId:2,patchEarned:true,pending:[1],opened:[]},version:1,garden:{flowers:10,patchFlowers:5,visitors:['bee']},preferences:{sound:false,letters:{set:'custom',custom:'SAM',case:'lower'},numbers:{max:5}},name:'Sam',missions:{next:2}});
+const backup = () => ({breakRuntime:{version:1,rules:[]},breaks:{version:1,rules:[]},practiceHistory:emptyHistory(),decorationRewards:{nextId:2,patchEarned:true,pending:[{id:1}],claimed:[]},visitorRewards:{nextId:2,patchEarned:true,pending:[1],opened:[]},version:1,garden:{flowers:10,patchFlowers:5,visitors:['bee']},preferences:{sound:false,letters:{set:'custom',custom:'SAM',case:'lower'},numbers:{max:5}},name:'Sam',missions:{next:2}});
 test('backup review waits for explicit confirmation and restores all fields atomically',async()=>{
  const env=setup({silent:true});const initial=env.run('JSON.stringify(state)'),writes=env.writes.length;
  const saved=backup();await env.run(`reviewBackup({size:100,text:async()=>${JSON.stringify(JSON.stringify(saved))}})`);
@@ -1214,4 +1214,345 @@ test('fifth correct letter says its picture word before the garden cheer and nev
  assert.equal(env.run('mode'),'find');assert.equal(plays(env).at(-1),'audio/correct-'+letter+'.wav');assert.equal(env.run('state.garden.flowers'),5);
  win(env);assert.equal(env.run('state.garden.flowers'),5);env.run('player.onended()');assert.equal(env.run('mode'),'reward');assert.equal(plays(env).at(-1),'audio/garden-complete.wav');
  const left=setup({savedState:{flowers:4}});left.run("start('find')");win(left);const stale=left.run('player.onended');left.run('home()');stale();assert.equal(left.run('mode'),'home');assert.equal(left.run('state.garden.flowers'),5);
+});
+const sampleBreak=()=>({id:'water',name:'Water 💧',emoji:'💧',enabled:false,kind:'interval',durationMinutes:5,intervalMinutes:30});
+test('break rule CRUD is transactional and preserves unrelated saved fields',()=>{
+ const env=setup({silent:true,savedState:{flowers:12,future:{kept:true}}});const before=env.run('JSON.stringify({...state,breaks:null,breakRuntime:null})');
+ env.run('prepareBreakSettings()');assert.match(env.elements.get('break-status').textContent,/No breaks/);
+ const rule=sampleBreak();assert.equal(env.run(`saveBreakRule(${JSON.stringify(rule)})`),true);
+ assert.equal(env.run("setBreakEnabled('water',true)"),true);assert.equal(env.run('state.breaks.rules[0].enabled'),true);
+ rule.name='Lunch <img src=x onerror=bad()> 🍽️';rule.kind='clock';delete rule.intervalMinutes;rule.startTime='12:00';rule.days=[1,2,3,4,5];
+ assert.equal(env.run(`saveBreakRule(${JSON.stringify(rule)})`),true);assert.match(env.run('breakSummary(state.breaks.rules[0])'),/12:00 on Mon/);
+ assert.equal(env.run('JSON.stringify({...state,breaks:null,breakRuntime:null})'),before);
+ const reload=setup({silent:true,rawSave:env.writes.at(-1).value});assert.equal(reload.run('state.breaks.rules[0].name'),rule.name);
+ assert.equal(env.run("deleteBreakRule('water')"),true);assert.equal(env.run('state.breaks.rules.length'),0);
+});
+test('break schema strictly validates Unicode, schedules, bounds, duplicate ids and versions',()=>{
+ const env=setup({silent:true}),rule=sampleBreak();
+ for(const changes of [{name:''},{name:' '.repeat(4)},{name:'😀'.repeat(41)},{name:'a\u0000'},{name:'\ud800'},{emoji:'X'},{durationMinutes:0},{durationMinutes:-1},{durationMinutes:241},{durationMinutes:1.5},{intervalMinutes:0},{intervalMinutes:'30'},{enabled:1},{id:'<script>'},{unexpected:true}])assert.equal(env.run(`validBreakRule(${JSON.stringify({...rule,...changes})})`),false,JSON.stringify(changes));
+ assert.equal(env.run(`validBreakRule(${JSON.stringify({...rule,name:'😀'.repeat(40)})})`),true);
+ const clock={...rule,kind:'clock',startTime:'23:59',days:[0,6]};delete clock.intervalMinutes;
+ assert.equal(env.run(`validBreakRule(${JSON.stringify(clock)})`),true);
+ for(const changes of [{days:[]},{days:[1,1]},{days:[7]},{days:['1']},{startTime:'24:00'},{startTime:'1:00'},{startTime:''}])assert.equal(env.run(`validBreakRule(${JSON.stringify({...clock,...changes})})`),false);
+ for(const config of [{version:2,rules:[]},{version:1,rules:[rule,rule]},{version:1,rules:[],extra:true},{version:1,rules:Array.from({length:21},(_,i)=>({...rule,id:'r'+i}))}])assert.equal(env.run(`validBreaks(${JSON.stringify(config)})`),false);
+});
+test('old backups gain no configured breaks and invalid backup rules cannot replace a garden',()=>{
+ const env=setup({silent:true});const backup=JSON.parse(env.run('JSON.stringify(state)'));delete backup.breaks;delete backup.breakRuntime;
+ assert.equal(env.run(`validateBackup(${JSON.stringify(JSON.stringify(backup))}).breaks.rules.length`),0);
+ backup.breaks={version:1,rules:[sampleBreak()]};assert.equal(env.run(`validateBackup(${JSON.stringify(JSON.stringify(backup))}).breaks.rules.length`),1);
+ backup.breaks.rules[0].intervalMinutes=0;const before=env.run('JSON.stringify(state)');assert.throws(()=>env.run(`validateBackup(${JSON.stringify(JSON.stringify(backup))})`),/invalid break/);assert.equal(env.run('JSON.stringify(state)'),before);
+});
+test('invalid local break data is retained and blocked without silently replacing it',()=>{
+ const invalid={version:9,rules:[{name:'retained'}]},env=setup({silent:true,savedState:{breaks:invalid}});env.run('prepareBreakSettings()');assert.match(env.elements.get('break-status').textContent,/kept unchanged/);assert.equal(env.elements.get('add-break').disabled,true);
+ assert.equal(env.run(`saveBreakRule(${JSON.stringify(sampleBreak())})`),false);env.run('persist()');assert.deepEqual(JSON.parse(env.writes.at(-1).value).breaks,invalid);
+});
+test('break changes roll back on unavailable storage and preserve the unsaved editor',()=>{
+ const env=setup({silent:true,writeError:true});env.run('prepareBreakSettings();editBreakRule()');assert.equal(env.elements.get('break-editor').hidden,false);
+ assert.equal(env.run(`saveBreakRule(${JSON.stringify(sampleBreak())})`),false);assert.equal(env.run('state.breaks.rules.length'),0);assert.match(env.elements.get('break-status').textContent,/previous rules are kept/);assert.equal(env.elements.get('break-editor').hidden,false);
+ const rule=sampleBreak(),existing=setup({silent:true,writeError:true,savedState:{breaks:{version:1,rules:[rule]}}});assert.equal(existing.run("deleteBreakRule('water')"),false);assert.equal(existing.run("setBreakEnabled('water',true)"),false);assert.equal(existing.run('state.breaks.rules[0].enabled'),false);
+});
+test('break editor previews drafts and only explicit save commits a rule',()=>{
+ const env=setup({silent:true});env.run('prepareBreakSettings();editBreakRule()');env.elements.get('break-name').value='Rest 🛋️';env.run('updateBreakPreview()');assert.match(env.elements.get('break-preview').textContent,/after 30 minutes/);assert.equal(env.run('state.breaks.rules.length'),0);
+ env.elements.get('cancel-break').onclick();assert.equal(env.run('state.breaks.rules.length'),0);
+ env.run('editBreakRule()');env.elements.get('break-name').value='Rest 🛋️';env.elements.get('save-break').onclick();assert.equal(env.run('state.breaks.rules.length'),1);assert.equal(env.run('state.breaks.rules[0].enabled'),false);
+});
+
+// Scheduling tests control wall time without running audio or a browser.
+function scheduled(rules,options={}){
+ let now=options.now??new Date(2026,10,16,10,0).getTime();
+ class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
+ const saved=backup();if(options.silent===false)saved.preferences.sound=!options.muted;saved.garden={flowers:10,patchFlowers:0};delete saved.visitorRewards;delete saved.decorationRewards;saved.breaks={version:1,rules};delete saved.breakRuntime;
+ if(options.runtime)saved.breakRuntime=options.runtime;
+ const env=setup({silent:true,rawSave:JSON.stringify(saved),...options,browser:{Date:Clock}});
+ const tick=ms=>{now+=ms;env.run('evaluateBreakSchedule()');};
+ return {...env,tick,setNow:value=>{now=value;},now:()=>now,json:code=>JSON.parse(env.run('JSON.stringify('+code+')'))};
+}
+const intervalBreak=(id='water',minutes=1,duration=1)=>({...sampleBreak(),id,enabled:true,intervalMinutes:minutes,durationMinutes:duration});
+const clockBreak=(id,time,days,duration=30)=>({id,name:id,emoji:'💧',enabled:true,kind:'clock',startTime:time,days,durationMinutes:duration});
+
+test('fixed windows use exact local boundaries, previous start day at midnight and no retroactive break',()=>{
+ const monday=new Date(2026,10,16,23,59).getTime();
+ const env=scheduled([clockBreak('night','23:59',[1],3)],{now:monday-1});
+ assert.equal(env.run('activeBreaks().length'),0);env.tick(1);assert.equal(env.run('activeBreaks().length'),1);
+ env.setNow(new Date(2026,10,17,0,1,59,999).getTime());assert.equal(env.run('activeBreaks().length'),1);
+ env.tick(1);assert.equal(env.run('activeBreaks().length'),0);
+ assert.equal(scheduled([clockBreak('lunch','12:00',[1])],{now:new Date(2026,10,16,12,15).getTime()}).run('activeBreaks().length'),1);
+ assert.equal(scheduled([clockBreak('lunch','12:00',[1])],{now:new Date(2026,10,16,13).getTime()}).run('activeBreaks().length'),0);
+});
+
+test('overlapping fixed windows expose every active rule until its exact end',()=>{
+ const env=scheduled([clockBreak('a','10:00',[1],2),clockBreak('b','10:01',[1],2)]);
+ assert.deepEqual(env.json('activeBreaks().map(item=>item.id)'),['a']);env.tick(60000);
+ assert.deepEqual(env.json('activeBreaks().map(item=>item.id)'),['a','b']);env.tick(60000);
+ assert.deepEqual(env.json('activeBreaks().map(item=>item.id)'),['b']);env.tick(60000);assert.equal(env.run('activeBreaks().length'),0);
+});
+
+test('visible learning modes including exploration accumulate partial play across navigation without a gap',()=>{
+ const env=scheduled([intervalBreak()]);
+ env.run("state.preferences.name={display:'Sam'}");
+ for(const activity of ['find','match','explore','name','number','count','quantity']){
+  env.run(`changeLearningMode('${activity}')`);env.tick(1000);
+  env.run('home()');env.tick(1000);
+ }
+ assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),7000);
+ env.run("changeLearningMode('explore')");env.tick(52999);assert.equal(env.run('activeBreaks().length'),0);
+ env.tick(1);assert.equal(env.run('activeBreaks()[0].kind'),'interval');assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),0);
+});
+
+test('settings, collections, reward screens and hidden time do not accumulate active learning',()=>{
+ const env=scheduled([intervalBreak()]);env.run("start('find')");env.tick(500);
+ env.elements.get('settings').showModal=()=>{env.elements.get('settings').open=true;};
+ env.elements.get('grownups').onclick();env.tick(10000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),500);
+ env.elements.get('settings').open=false;env.elements.get('settings').onclose();env.tick(500);
+ env.run('document.hidden=true');env.dispatch('visibilitychange');env.tick(10000);
+ env.run('document.hidden=false');env.dispatch('visibilitychange');env.tick(500);
+ for(const screen of ['reward','collection','decorate','visitor','home']){env.run(`changeLearningMode('${screen}')`);env.tick(10000);}
+ assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),1500);
+});
+
+test('independent intervals freeze together during breaks and trigger together at a shared boundary',()=>{
+ const env=scheduled([intervalBreak('a',1,1),intervalBreak('b',2,2)]);env.run("changeLearningMode('find')");
+ env.tick(60000);assert.deepEqual(env.json('activeBreaks().map(item=>item.id)'),['a']);assert.equal(env.run('state.breakRuntime.rules[1].elapsedMs'),60000);
+ env.tick(60000);assert.equal(env.run('activeBreaks().length'),0);assert.equal(env.run('state.breakRuntime.rules[1].elapsedMs'),60000);
+ env.elements.get('break-return').onclick();env.run("changeLearningMode('find')");env.tick(60000);assert.deepEqual(env.json('activeBreaks().map(item=>item.id)'),['a','b']);
+ env.tick(60000);assert.deepEqual(env.json('activeBreaks().map(item=>item.id)'),['b']);
+ env.tick(60000);assert.equal(env.run('activeBreaks().length'),0);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),0);
+ env.elements.get('break-return').onclick();env.run("changeLearningMode('find')");env.tick(1);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),1);
+});
+
+test('a tick splits at clock starts and ends without crediting locked portions',()=>{
+ const env=scheduled([intervalBreak('i',2),clockBreak('clock','10:01',[1],1)],{now:new Date(2026,10,16,10,0,30).getTime()});
+ env.run("changeLearningMode('explore')");env.tick(60000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),30000);
+ env.tick(60000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),30000);assert.match(env.elements.get('app').innerHTML,/Back to the garden/);
+});
+
+test('partial elapsed and triggered absolute end survive reload, with no background credit',()=>{
+ let env=scheduled([intervalBreak()]);env.run("changeLearningMode('find')");env.tick(30000);
+ let saved=env.writes.at(-1).value;
+ env=scheduled([intervalBreak()],{rawSave:saved,now:env.now()+3600000});assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),30000);
+ env.run("changeLearningMode('find')");env.tick(30000);const end=env.run('state.breakRuntime.rules[0].breakEnd');saved=env.writes.at(-1).value;
+ env=scheduled([intervalBreak()],{rawSave:saved,now:end-1});assert.equal(env.run('activeBreaks().length'),1);env.tick(1);assert.equal(env.run('activeBreaks().length'),0);
+ env.elements.get('break-return').onclick();env.run("changeLearningMode('find')");env.tick(1000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),1000);
+});
+
+test('editing resets only the changed rule; unchanged saves retain elapsed and failed config writes roll back',()=>{
+ const env=scheduled([intervalBreak('a',2),intervalBreak('b',3)]);env.run("changeLearningMode('find')");env.tick(10000);
+ env.run("editBreakRule('a')");assert.match(env.elements.get('break-preview').textContent,/resets only this rule/);
+ env.run("saveBreakRule({...state.breaks.rules[0],name:'New name'})");
+ assert.deepEqual(env.json('state.breakRuntime.rules.map(item=>item.elapsedMs)'),[0,10000]);
+ env.run('saveBreakRule({...state.breaks.rules[1]})');assert.equal(env.run('state.breakRuntime.rules[1].elapsedMs'),10000);
+ const failed=scheduled([intervalBreak()],{writeError:true});failed.run("changeLearningMode('find')");failed.tick(1000);
+ const prior=failed.run('JSON.stringify(state.breakRuntime)');assert.equal(failed.run("setBreakEnabled('water',false)"),false);assert.equal(failed.run('JSON.stringify(state.breakRuntime)'),prior);
+});
+
+test('runtime backups reject invalid bounds, duplicate IDs, config mismatches and unsupported versions',()=>{
+ const env=scheduled([intervalBreak()]);const saved=env.json('state');
+ const invalid=[{version:2},{rules:[saved.breakRuntime.rules[0],saved.breakRuntime.rules[0]]},...[
+  {id:'unknown'},{signature:'other'},{elapsedMs:-1},{elapsedMs:60000},{elapsedMs:Infinity},
+  {breakStart:100,breakEnd:101},{breakStart:null,breakEnd:100},{extra:true}
+ ].map(change=>({rules:[{...saved.breakRuntime.rules[0],...change}]}))];
+ for(const change of invalid){const bad={...saved,breakRuntime:{...saved.breakRuntime,...change}};assert.throws(()=>env.run(`validateBackup(${JSON.stringify(JSON.stringify(bad))})`),/break timing/);}
+ delete saved.breakRuntime;const restored=env.json(`validateBackup(${JSON.stringify(JSON.stringify(saved))})`);assert.equal(restored.breakRuntime.rules[0].elapsedMs,0);
+});
+
+test('invalid local runtime stays intact and reports guidance while normal learning and fixed schedules work',()=>{
+ const invalid={version:9,rules:[]},env=scheduled([intervalBreak(),clockBreak('clock','10:00',[1])],{runtime:invalid});
+ env.run('prepareBreakSettings()');assert.match(env.elements.get('break-status').textContent,/timing could not be read/);
+ assert.deepEqual(env.json('state.breakRuntime'),invalid);assert.equal(env.run('activeBreaks().length'),1);
+ env.run("start('find')");assert.equal(env.run('target'),null);assert.equal(env.run('state.garden.flowers'),10);env.tick(1000);assert.deepEqual(env.json('state.breakRuntime'),invalid);
+});
+
+test('failed runtime writes retain in-memory timing and explain that it may be lost',()=>{
+ const env=scheduled([intervalBreak()],{writeError:true});env.run("changeLearningMode('find')");env.tick(60000);
+ assert.equal(env.run('activeBreaks().length'),1);assert.equal(env.writes.length,0);
+ assert.match(env.elements.get('storage-status').textContent,/cannot be saved.*may be lost/);
+ env.tick(60000);assert.equal(env.run('activeBreaks().length'),0);
+});
+
+test('backward clocks, invalid clocks and unobserved large gaps never synthesize interval credit',()=>{
+ const env=scheduled([intervalBreak()]);env.run("changeLearningMode('find')");env.tick(10000);
+ env.tick(-5000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),10000);
+ env.tick(3600000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),10000);
+ env.run('evaluateBreakSchedule(NaN);evaluateBreakSchedule(Infinity);evaluateBreakSchedule(-1)');assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),10000);
+ env.tick(1000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),11000);
+});
+
+test('timer and foreground hooks recheck windows, and observer receives overlap transitions',()=>{
+ const env=scheduled([clockBreak('a','10:01',[1],1),clockBreak('b','10:02',[1],1)]);
+ env.run('let observed=[];breakScheduleStateChanged=(active)=>observed.push(active.map(item=>item.id))');
+ env.setNow(env.now()+60000);env.fireTimers(1000);assert.deepEqual(env.json('observed'),[['a']]);
+ env.setNow(env.now()+60000);env.dispatch('focus');assert.deepEqual(env.json('observed'),[['a'],['b']]);
+ env.setNow(env.now()+60000);env.dispatch('pageshow');assert.deepEqual(env.json('observed'),[['a'],['b'],[]]);
+});
+
+
+test('name setup and completed-name screens do not count as usable learning',()=>{
+ const env=scheduled([intervalBreak()]);env.run("start('name')");env.tick(1000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),0);
+ env.run("state.preferences.name={display:'A'};start('name')");env.tick(1000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),1000);
+ env.run("evaluateBreakSchedule();state.namePractice={profile:'A',index:1,complete:true};nameRound()");env.tick(1000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),1000);
+});
+
+test('local DST policy normalizes missing times, chooses the earlier repeated time, and uses elapsed duration',()=>{
+ const previous=process.env.TZ;process.env.TZ='America/New_York';
+ try {
+  let env=scheduled([clockBreak('spring','02:30',[0],60)],{now:new Date(2026,2,8,3,30).getTime()});
+  assert.equal(env.run('activeBreaks().length'),1);assert.equal(env.run('activeBreaks()[0].end-activeBreaks()[0].start'),3600000);
+  env.tick(60000);assert.equal(env.run('activeBreaks().length'),1);
+  env=scheduled([clockBreak('fall','01:30',[0],60)],{now:new Date('2026-11-01T01:30:00-04:00').getTime()});
+  assert.equal(env.run('activeBreaks().length'),1);
+  env.setNow(new Date('2026-11-01T01:30:00-05:00').getTime());assert.equal(env.run('activeBreaks().length'),0);
+ } finally {if(previous===undefined)delete process.env.TZ;else process.env.TZ=previous;}
+});
+
+test('pagehide checkpoints partial play and a triggered interval keeps its absolute end in the background',()=>{
+ const env=scheduled([intervalBreak()]);env.run("start('find')");env.setNow(env.now()+125);env.dispatch('pagehide');
+ assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),125);
+ env.setNow(env.now()+60000);env.dispatch('pageshow');assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),125);
+ env.tick(59875);const end=env.run('state.breakRuntime.rules[0].breakEnd');assert.equal(env.run('activeBreaks().length'),1);
+ env.run('document.hidden=true');env.dispatch('visibilitychange');env.tick(30000);assert.equal(env.run('state.breakRuntime.rules[0].breakEnd'),end);
+ env.tick(30000);assert.equal(env.run('activeBreaks().length'),0);
+ env.run('document.hidden=false');env.dispatch('visibilitychange');env.elements.get('break-return').onclick();env.run("changeLearningMode('find')");env.tick(1);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),1);
+});
+
+test('a validated imported active interval retains its end and missing legacy runtime initializes only fresh counters',async()=>{
+ const env=scheduled([intervalBreak()]);env.run("start('find')");env.tick(60000);const end=env.run('state.breakRuntime.rules[0].breakEnd');
+ const text=env.run('JSON.stringify(state)');verifyBreakParent(env);await env.run(`reviewBackup({size:100,text:async()=>${JSON.stringify(text)}})`);
+ env.run('replaceFromBackup()');assert.equal(env.run('state.breakRuntime.rules[0].breakEnd'),end);
+ assert.equal(env.run('activeBreaks().length'),1);assert.equal(env.run('mode'),'break');
+ const legacy=JSON.parse(text);delete legacy.breakRuntime;
+ verifyBreakParent(env);await env.run(`reviewBackup({size:100,text:async()=>${JSON.stringify(JSON.stringify(legacy))}})`);env.run('replaceFromBackup()');
+ assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),0);assert.equal(env.run('activeBreaks().length'),0);
+});
+
+function verifyBreakParent(env){
+ env.elements.get('grownups').onclick();
+ if(env.run('breakGateAnswer')!==null){env.elements.get('break-gate-answer').value=String(env.run('breakGateAnswer'));env.elements.get('break-gate-submit').onclick();}
+}
+test('startup break replaces all play, survives reload and manually returns without narration',()=>{
+ const rules=[clockBreak('rest','10:00',[1],1)],env=scheduled(rules,{silent:false});
+ assert.equal(env.run('mode'),'break');assert.match(env.elements.get('app').innerHTML,/It’s break time/);
+ assert.deepEqual(plays(env),['audio/break-time.wav']);
+ const reloaded=scheduled(rules,{rawSave:env.writes.at(-1).value});assert.equal(reloaded.run('mode'),'break');
+ for(const call of ["home()","letterGarden()","numberGarden()","start('explore')","missionMenu()","myGarden()","decorateGarden()","chooseDecoration()","visitorCollection()","round()"]){reloaded.run(call);assert.equal(reloaded.run('mode'),'break',call);}
+ env.tick(60000);assert.match(env.elements.get('app').innerHTML,/Back to the garden/);assert.equal(env.run('mode'),'break');assert.equal(plays(env).length,1);
+ env.elements.get('break-return').onclick();assert.equal(env.run('mode'),'home');assert.equal(plays(env).length,1);
+});
+test('action-boundary lock rejects stale answer, name, mission and visitor mutations before the next tick',()=>{
+ const env=scheduled([clockBreak('rest','10:01',[1],1)]);env.run("state.preferences.name={display:'A'};start('find')");
+ const answer=env.run("({dataset:{letter:target[0]},classList:{add(){},remove(){}}})"),before=env.run('JSON.stringify({garden:state.garden,history:state.practiceHistory,mission:state.mission,name:state.namePractice,rewards:state.visitorRewards})');
+ env.setNow(env.now()+60000);env.run(`answer(${JSON.stringify({dataset:answer.dataset})})`);
+ assert.equal(env.run('mode'),'break');assert.equal(env.run('target'),null);
+ env.run("earnFlower();recordPractice('explore','A');missionProgress();nameAnswer('A',nameViewId,'A',0,()=>false,()=>{});revealVisitor(state.visitorRewards?.pending[0]);countObject({dataset:{object:'0'}})");
+ assert.equal(env.run('JSON.stringify({garden:state.garden,history:state.practiceHistory,mission:state.mission,name:state.namePractice,rewards:state.visitorRewards})'),before);
+});
+test('a break cancels automatic next and the fifth-flower cheer while preserving the earned patch',()=>{
+ const env=scheduled([clockBreak('rest','10:01',[1],1)],{silent:false});env.run("state.garden.patchFlowers=4;start('find')");win(env);const stale=env.run('player.onended');
+ assert.equal(env.run('state.garden.patchFlowers'),5);env.tick(60000);const playsBefore=plays(env).length;
+ stale();env.fireTimers(900);env.fireTimers(15000);assert.equal(env.run('mode'),'break');assert.equal(env.run('target'),null);assert.equal(env.run('state.garden.patchFlowers'),5);assert.equal(plays(env).length,playsBefore);
+ assert.equal(env.run('letterAdvanceTimer'),null);assert.equal(plays(env).at(-1),'audio/break-time.wav');
+});
+test('adult verification protects open settings and old controls at a deadline, and resets on close',()=>{
+ const env=scheduled([clockBreak('rest','10:01',[1],2)]);env.elements.get('grownups').onclick();assert.equal(env.elements.get('settings').open,true);
+ const before=env.run('JSON.stringify(state.garden)');env.setNow(env.now()+60000);env.elements.get('reset').onclick();assert.equal(env.run('JSON.stringify(state.garden)'),before);assert.equal(env.elements.get('settings').open,false);assert.match(env.elements.get('app').innerHTML,/Grown-ups only/);
+ env.elements.get('break-gate-answer').value='0';env.elements.get('break-gate-submit').onclick();assert.equal(env.run('breakParentVerified'),false);
+ verifyBreakParent(env);assert.equal(env.run('breakParentVerified'),true);assert.equal(env.elements.get('settings').open,true);
+ env.elements.get('settings').close();assert.equal(env.run('breakParentVerified'),false);assert.equal(env.run("setBreakEnabled('rest',false)"),false);assert.equal(env.run('state.breaks.rules[0].enabled'),true);
+});
+test('verified current-only skip persists across reload, preserves overlaps and future schedules',()=>{
+ const rules=[clockBreak('a','10:00',[1],2),clockBreak('b','10:00',[1],3),intervalBreak('interval',1)],env=scheduled(rules);
+ const config=env.run('JSON.stringify(state.breaks)');assert.equal(env.run('skipBreakOccurrence(activeBreaks()[0])'),false);verifyBreakParent(env);
+ assert.equal(env.run('skipBreakOccurrence(activeBreaks()[0])'),true);assert.deepEqual(env.json('activeBreaks().map(item=>item.id)'),['b']);assert.equal(env.run('mode'),'break');assert.equal(env.run('JSON.stringify(state.breaks)'),config);
+ const reload=scheduled(rules,{rawSave:env.writes.at(-1).value});assert.deepEqual(reload.json('activeBreaks().map(item=>item.id)'),['b']);verifyBreakParent(reload);assert.equal(reload.run('skipBreakOccurrence(activeBreaks()[0])'),true);
+ reload.elements.get('settings').close();reload.elements.get('break-return').onclick();reload.run("start('find')");reload.tick(30000);assert.equal(reload.run("state.breakRuntime.rules.find(item=>item.id==='interval').elapsedMs"),30000);
+ reload.setNow(new Date(2026,10,23,10,0).getTime());reload.dispatch('focus');assert.deepEqual(reload.json('activeBreaks().map(item=>item.id)'),['a','b']);
+});
+test('failed skip rolls back, invalid receipts cannot bypass fixed breaks, active edits require verification',()=>{
+ const rules=[clockBreak('a','10:00',[1],2)],env=scheduled(rules,{writeError:true});verifyBreakParent(env);const before=env.run('JSON.stringify(state.breakRuntime)');
+ assert.equal(env.run('skipBreakOccurrence(activeBreaks()[0])'),false);assert.equal(env.run('JSON.stringify(state.breakRuntime)'),before);assert.equal(env.run('activeBreaks().length'),1);assert.match(env.elements.get('break-status').textContent,/saving failed/);
+ const bad=scheduled(rules,{runtime:{version:9,rules:[],skipped:'bad'}});assert.equal(bad.run('activeBreaks().length'),1);verifyBreakParent(bad);bad.run('prepareBreakSettings()');assert.match(bad.elements.get('break-status').textContent,/timing could not be read/);
+ const edit=scheduled(rules);assert.equal(edit.run("setBreakEnabled('a',false)"),false);verifyBreakParent(edit);assert.equal(edit.run("setBreakEnabled('a',false)"),true);assert.equal(edit.run('activeBreaks().length'),0);assert.match(edit.elements.get('app').innerHTML,/Back to the garden/);
+});
+test('mute and silent mode suppress break audio; canceled parent tests cannot narrate learning during lock',()=>{
+ for(const options of [{muted:true},{silent:true}]){const env=scheduled([clockBreak('a','10:00',[1],1)],{silent:false,...options});assert.equal(plays(env).length,0);assert.equal(env.spoken.length,0);env.elements.get('test-sound').onclick();env.elements.get('break-gate-cancel').onclick();env.run("speakPrompt();speak('learning','find-A')");assert.equal(plays(env).length,0);}
+});
+test('skip receipt backup validation rejects extra fields, wrong signatures, duplicates and durations',()=>{
+ const env=scheduled([clockBreak('a','10:00',[1],2)]);verifyBreakParent(env);env.run('skipBreakOccurrence(activeBreaks()[0])');const saved=env.json('state');assert.ok(env.run(`validateBackup(${JSON.stringify(JSON.stringify(saved))})`));
+ for(const patch of [{signature:'wrong'},{end:saved.breakRuntime.skipped[0].end+1},{extra:true}]){const bad=structuredClone(saved);Object.assign(bad.breakRuntime.skipped[0],patch);assert.throws(()=>env.run(`validateBackup(${JSON.stringify(JSON.stringify(bad))})`),/break timing/);}
+ const bad=structuredClone(saved);bad.breakRuntime.skipped.push(bad.breakRuntime.skipped[0]);assert.throws(()=>env.run(`validateBackup(${JSON.stringify(JSON.stringify(bad))})`),/break timing/);
+});
+const {spawn}=require('node:child_process');
+test('local HTTP server serves known manifest recordings and ranges while rejecting unknown paths',async()=>{
+ const child=spawn(process.execPath,['server.js'],{cwd:root,env:{...process.env,PORT:'0'},stdio:['ignore','pipe','pipe'],windowsHide:true});
+ try{
+  const port=await new Promise((resolve,reject)=>{let output='';const timeout=setTimeout(()=>reject(new Error('server startup timeout')),5000);child.stdout.on('data',chunk=>{output+=chunk;const found=/localhost:(\d+)/.exec(output);if(found){clearTimeout(timeout);resolve(Number(found[1]));}});child.on('error',error=>{clearTimeout(timeout);reject(error)});child.on('exit',code=>{clearTimeout(timeout);reject(new Error('server exited '+code))});});
+  const base='http://127.0.0.1:'+port;
+  for(const id of ['number-find-10','count-number-3','mission-picnic-0','break-time']){
+   const response=await fetch(base+'/audio/'+id+'.wav');assert.equal(response.status,200,id);assert.equal(response.headers.get('content-type'),'audio/wav');assert.ok((await response.arrayBuffer()).byteLength>1000);
+  }
+  const range=await fetch(base+'/audio/break-time.wav',{headers:{Range:'bytes=0-11'}});assert.equal(range.status,206);assert.equal(Buffer.from(await range.arrayBuffer()).toString('ascii',0,4),'RIFF');assert.match(range.headers.get('content-range'),/^bytes 0-11\//);
+  assert.equal((await fetch(base+'/audio/break-time.wav',{headers:{Range:'bytes=999999999-'}})).status,416);
+  for(const name of ['/audio/not-a-clip.wav','/audio/manifest.json','/audio/%2e%2e%2fapp.js','/server.js'])assert.equal((await fetch(base+name)).status,404,name);
+ }finally{child.kill();await new Promise(resolve=>child.once('exit',resolve));}
+});
+test('nested answer helpers share a single boundary checkpoint without clearing the accepted target',()=>{
+ const env=scheduled([clockBreak('rest','10:01',[1],1)]);env.run("start('find')");env.setNow(env.now()+59999);
+ env.run('let boundaryClock=Date.now();Date.now=()=>boundaryClock++');
+ win(env);assert.equal(env.run('state.garden.flowers'),11);assert.equal(env.run('breakActionDepth'),0);
+ env.run('home()');assert.equal(env.run('mode'),'break');assert.equal(env.run('target'),null);assert.match(env.elements.get('app').innerHTML,/It’s break time/);
+});
+test('detached placement, decoration choice and mission handlers cannot mutate at the deadline',()=>{
+ const rules=[clockBreak('rest','10:01',[1],1)],saved=placementSave();saved.breaks={version:1,rules};
+ const env=scheduled(rules,{rawSave:JSON.stringify(saved)});env.run("decorateGarden('mushroom')");const place=env.elements.get('garden-spot-0').onclick,before=env.run('JSON.stringify(state)');env.setNow(env.now()+60000);place();assert.equal(env.run('state.gardenPlacements'),undefined);assert.equal(env.run('mode'),'break');assert.equal(env.run('JSON.stringify(state)'),before);
+ const choice=scheduled(rules);choice.run("state.garden.patchFlowers=5;state.decorationRewards={nextId:2,patchEarned:true,pending:[{id:1}],claimed:[]};chooseDecoration()");const keep=[...choice.elements.entries()].find(([id])=>id.startsWith('keep-'))[1].onclick;choice.setNow(choice.now()+60000);keep();assert.equal(choice.run('state.decorationRewards.claimed.length'),0);assert.equal(choice.run('state.decorationRewards.pending.length'),1);
+ const mission=scheduled(rules);mission.run("startStoryMission(Object.keys(missionStories)[0])");const next=mission.elements.get('mission-continue').onclick,progress=mission.run('JSON.stringify(state.mission)');mission.setNow(mission.now()+60000);next();assert.equal(mission.run('mode'),'break');assert.equal(mission.run('JSON.stringify(state.mission)'),progress);
+});
+
+test('skipping an interval clears only its occurrence and permits the next interval after active play',()=>{
+ const rules=[intervalBreak()],env=scheduled(rules);env.run("start('find')");env.tick(60000);const start=env.run('activeBreaks()[0].start');verifyBreakParent(env);assert.equal(env.run('skipBreakOccurrence(activeBreaks()[0])'),true);
+ env.elements.get('settings').close();env.elements.get('break-return').onclick();env.run("start('find')");env.tick(30000);assert.equal(env.run('state.breakRuntime.rules[0].elapsedMs'),30000);assert.equal(env.run('activeBreaks().length'),0);
+ const reload=scheduled(rules,{rawSave:env.writes.at(-1).value,now:env.now()});reload.run("start('find')");reload.tick(30000);assert.equal(reload.run('activeBreaks().length'),1);assert.ok(reload.run('activeBreaks()[0].start')>start);assert.equal(reload.run('mode'),'break');
+ assert.equal(reload.elements.get('break-picture').textContent,'💧');
+});
+
+test('break interruption preserves fifth-flower receipts through lock reload and claims after return',()=>{
+ const rules=[clockBreak('rest','10:01',[1],1)],env=scheduled(rules,{silent:false});
+ env.run("state.garden.patchFlowers=4;start('find')");win(env);env.tick(60000);
+ assert.equal(visitorState(env).pending.length,1);assert.equal(decorationState(env).pending.length,1);
+ const reload=scheduled(rules,{rawSave:env.writes.at(-1).value,now:env.now()});assert.equal(reload.run('mode'),'break');
+ reload.tick(60000);reload.elements.get('break-return').onclick();reload.run("start('find')");
+ reload.elements.get('reveal-visitor').onclick();reload.run('chooseDecoration()');const option=decorationOptions(reload)[0];reload.elements.get('keep-'+option).onclick();
+ assert.equal(visitorState(reload).opened.length,1);assert.equal(decorationState(reload).claimed.length,1);assert.equal(reload.run('state.garden.flowers'),11);
+ const final=scheduled(rules,{rawSave:reload.writes.at(-1).value,now:reload.now()});assert.equal(visitorState(final).pending.length,0);assert.equal(decorationState(final).pending.length,0);
+});
+test('break cancels an active counting queue and queued callbacks cannot resume audio or credit',()=>{
+ const env=scheduled([clockBreak('rest','10:01',[1],1)],{silent:false});env.run("start('count');target=5");appleTap(env,0);appleTap(env,1);const ended=env.run('player.onended');
+ env.tick(60000);const played=plays(env).length;ended();env.fireTimers(15000);
+ assert.equal(env.run('countAudioQueue.length'),0);assert.equal(plays(env).length,played);assert.equal(env.run('state.garden.flowers'),10);assert.equal(env.run('mode'),'break');
+});
+test('earned name and mission progress survive a break and reload without a second reward',()=>{
+ const rules=[clockBreak('rest','10:01',[1],1)];
+ for(const activity of ['name','mission']){
+  const env=scheduled(rules);if(activity==='name'){env.run("state.preferences.name={display:'AB'};start('name')");nameWin(env);}else{env.run("startMission('number')");numberTap(env);}
+  const progress=env.run(activity==='name'?'state.namePractice.index':'state.mission.progress');assert.equal(progress,1);env.tick(60000);
+  const reload=scheduled(rules,{rawSave:env.writes.at(-1).value,now:env.now()});assert.equal(reload.run(activity==='name'?'state.namePractice.index':'state.mission.progress'),1);assert.equal(reload.run('state.garden.flowers'),11);
+  reload.tick(60000);reload.elements.get('break-return').onclick();assert.equal(reload.run('state.garden.flowers'),11);
+ }
+});
+test('detached visitor and decoration claim controls preserve receipts at a break deadline',()=>{
+ const rules=[clockBreak('rest','10:01',[1],1)];
+ for(const kind of ['visitor','decoration']){
+  const saved=backup();saved.breaks={version:1,rules};delete saved.breakRuntime;const env=scheduled(rules,{rawSave:JSON.stringify(saved)});
+  let claim;if(kind==='visitor'){env.run("start('find')");claim=env.elements.get('reveal-visitor').onclick;}else{env.run('chooseDecoration()');claim=env.elements.get('keep-'+decorationOptions(env)[0]).onclick;}
+  const before=env.run('JSON.stringify({visitors:state.visitorRewards,decorations:state.decorationRewards,garden:state.garden})');env.setNow(env.now()+60000);claim();
+  assert.equal(env.run('mode'),'break');assert.equal(env.run('JSON.stringify({visitors:state.visitorRewards,decorations:state.decorationRewards,garden:state.garden})'),before);
+ }
+});
+test('a reviewed import cannot replace the garden when a break starts before confirmation',async()=>{
+ const rules=[clockBreak('rest','10:01',[1],1)],env=scheduled(rules);env.elements.get('grownups').onclick();
+ await env.run(`reviewBackup({size:100,text:async()=>${JSON.stringify(JSON.stringify(backup()))}})`);const before=env.run('state.garden.flowers');env.setNow(env.now()+60000);env.elements.get('confirm-import').onclick();
+ assert.equal(env.run('mode'),'break');assert.equal(env.run('state.garden.flowers'),before);assert.equal(env.run('state.breaks.rules[0].id'),'rest');assert.equal(env.run('breakParentVerified'),false);
+});
+test('a scheduled break cancels an actually pending muted next-letter timer',()=>{
+ const env=scheduled([clockBreak('rest','10:01',[1],1)]);env.run("start('find')");win(env);assert.notEqual(env.run('letterAdvanceTimer'),null);
+ env.tick(60000);assert.equal(env.run('letterAdvanceTimer'),null);env.fireTimers(900);assert.equal(env.run('mode'),'break');assert.equal(env.run('target'),null);assert.equal(env.run('state.garden.flowers'),11);
 });

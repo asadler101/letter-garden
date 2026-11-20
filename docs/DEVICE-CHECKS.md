@@ -37,3 +37,8 @@ For every failure record reproduction steps, expected/actual behavior, severity 
 ## Follow-up: narration and letter flow
 
 NOT RUN on actual iPad: compare Automatic / Device voice / Original recordings using Try this voice; confirm intelligibility, first-tap playback, repeat audio, mute, and rapid counting with each mode. Check Big & Little with and without a buddy in iPad landscape with Safari browser bars visible: answers, feedback, and flower strip should stay visible without scrolling. Correct letter answers should advance after narration; muted answers after a short pause. Verify leaving/settings/backgrounding/replay cancels automatic advancement, no duplicate flower is awarded, and flower five stops at the garden celebration. Browser controls were unavailable during implementation; layout has not been visually confirmed for this follow-up.
+
+
+## Break-time follow-up (LG-31–LG-34)
+
+See [BREAK-CHECKS.md](BREAK-CHECKS.md) for the November 19 automated and limited silent-browser evidence, physical-device NOT RUN rows, and break interruption/backup/adult-access checklist. LG-31–LG-33 are implemented locally; LG-34 remains open for actual iPhone/iPad/laptop, listening, accessibility and willing-family checks. Earlier test/WAV counts in this record describe their dated snapshots.
